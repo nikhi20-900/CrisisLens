@@ -83,6 +83,7 @@ export interface EvidenceLink {
   linked_at: string;
   similarity_score: number;
   link_rationale: string;
+  evidence?: Evidence;
 }
 
 // 4. Impact
@@ -136,6 +137,8 @@ export interface ActionPlan {
   responder_notes?: string;
   created_at: string;
 }
+
+export type Recommendation = ActionPlan;
 
 // 8. Incident Snapshot ("What Changed?")
 export interface IncidentSnapshot {
