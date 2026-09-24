@@ -48,6 +48,15 @@ export interface Report {
   timestamp: string;
 }
 
+export interface ReportSubmissionResponse {
+  status: string;
+  report_id: string;
+  evidence: Evidence;
+  evidence_link: EvidenceLink;
+  incident_id: string;
+  active_recommendation?: ActionPlan;
+}
+
 // 2. Evidence (AI-Extracted Knowledge)
 export interface EvidenceConfidence {
   disaster_type: number;

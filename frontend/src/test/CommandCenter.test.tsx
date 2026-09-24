@@ -5,9 +5,11 @@ import { IncidentDetailPanel } from '@/components/incidents/IncidentDetailPanel'
 import { NeedsPanel } from '@/components/incidents/NeedsPanel';
 import { PriorityDisplay } from '@/components/incidents/PriorityDisplay';
 import { EvidenceCard } from '@/components/evidence/EvidenceCard';
+import { EvidencePanel } from '@/components/evidence/EvidencePanel';
 import { WhatChangedBanner } from '@/components/timeline/WhatChangedBanner';
 import { SituationTimeline } from '@/components/timeline/SituationTimeline';
 import { RecommendationPanel } from '@/components/recommendations/RecommendationPanel';
+import { AddReportModal } from '@/components/ingestion/AddReportModal';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorAlert } from '@/components/common/ErrorAlert';
 import {
@@ -142,5 +144,87 @@ describe('CrisisLens Command Center Components', () => {
 
     render(<EmptyState message="No active incidents reported" />);
     expect(screen.getByText('No active incidents reported')).toBeInTheDocument();
+  });
+
+  it('renders EvidencePanel with fragmented sources breakdown and triggers onAddEvidence', () => {
+    const onAddEvidence = vi.fn();
+    render(
+      <EvidencePanel
+        evidenceList={demoEvidenceList.map((l) => l.evidence!).filter(Boolean)}
+        evidenceLinks={demoEvidenceList}
+        onAddEvidence={onAddEvidence}
+      />
+    );
+
+    expect(screen.getAllByText(/SOURCES/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Photo/i).length).toBeGreaterThan(0);
+
+    const addBtn = screen.getByRole('button', { name: /\+ ADD EVIDENCE/i });
+    fireEvent.click(addBtn);
+    expect(onAddEvidence).toHaveBeenCalled();
+  });
+
+  it('renders IncidentDetailPanel with + ADD EVIDENCE button and triggers handler', () => {
+    const onAddEvidence = vi.fn();
+    render(
+      <IncidentDetailPanel
+        incident={demoIncidents[0]}
+        onAddEvidence={onAddEvidence}
+      />
+    );
+
+    const addBtn = screen.getByRole('button', { name: /\+ ADD EVIDENCE/i });
+    fireEvent.click(addBtn);
+    expect(onAddEvidence).toHaveBeenCalledWith('INC-001');
+  });
+
+  it('renders AddReportModal, handles preset and confirms addition to incident', async () => {
+    const onClose = vi.fn();
+    const onSubmitted = vi.fn();
+
+    render(
+      <AddReportModal
+        isOpen={true}
+        onClose={onClose}
+        preselectedIncidentId="INC-001"
+        prefillLocation="Bridge Road, Sector 4"
+        onReportSubmitted={onSubmitted}
+      />
+    );
+
+    expect(screen.getByText('Add Disaster Information')).toBeInTheDocument();
+    expect(screen.getByText('Targeting INC-001')).toBeInTheDocument();
+
+    // Click demo preset
+    const presetBtn = screen.getByText(/Trapped Residents/i);
+    fireEvent.click(presetBtn);
+
+    // Click "Analyze Evidence"
+    const analyzeBtn = screen.getByRole('button', { name: /Analyze Evidence/i });
+    fireEvent.click(analyzeBtn);
+
+    // Wait for analysis to progress to matched state
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Evidence Analyzed & Incident Matched/i)).toBeInTheDocument();
+      },
+      { timeout: 4000 }
+    );
+
+    expect(screen.getByText(/Related Incident Found/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/INC-001/i).length).toBeGreaterThan(0);
+
+    // Confirm addition to incident
+    const addConfirmBtn = screen.getByRole('button', { name: /Add to Incident/i });
+    fireEvent.click(addConfirmBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Evidence Added to/i)).toBeInTheDocument();
+    });
+
+    const viewIncidentBtn = screen.getByRole('button', { name: /View Updated Incident/i });
+    fireEvent.click(viewIncidentBtn);
+
+    expect(onSubmitted).toHaveBeenCalled();
   });
 });

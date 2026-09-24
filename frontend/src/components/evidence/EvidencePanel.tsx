@@ -5,7 +5,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { ErrorAlert } from '@/components/common/ErrorAlert';
 import { EmptyState } from '@/components/common/EmptyState';
 import { EvidenceCard } from './EvidenceCard';
-import { FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 
 interface EvidencePanelProps {
   evidenceList?: Evidence[];
@@ -14,6 +14,7 @@ interface EvidencePanelProps {
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  onAddEvidence?: () => void;
 }
 
 export const EvidencePanel: React.FC<EvidencePanelProps> = ({
@@ -23,6 +24,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   isLoading = false,
   error = null,
   onRetry,
+  onAddEvidence,
 }) => {
   const isBusy = loading || isLoading;
   const [filterSource, setFilterSource] = useState<string>('all');
@@ -50,6 +52,23 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 
   // Progressive disclosure: show 2 items when collapsed, all when expanded
   const displayItems = isExpanded ? filteredItems : filteredItems.slice(0, 2);
+
+  // Source breakdown counts
+  const photosCount = items.filter(
+    (it) => it.evidence.raw_report?.media?.some(
+      (m) => m.media_type.includes('image') || m.url.match(/\.(jpg|jpeg|png)$/i)
+    )
+  ).length;
+
+  const videosCount = items.filter(
+    (it) => it.evidence.raw_report?.media?.some(
+      (m) => m.media_type.includes('video') || m.url.match(/\.(mp4|mov)$/i)
+    )
+  ).length;
+
+  const textReportsCount = items.length - photosCount - videosCount > 0
+    ? items.length - photosCount - videosCount
+    : (items.length > 0 && photosCount === 0 && videosCount === 0 ? items.length : 1);
 
   return (
     <Card
@@ -95,6 +114,51 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Fragmented Sources Combined Summary Banner */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              fontSize: '12px',
+              flexWrap: 'wrap',
+              gap: '6px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 700, color: '#0f172a' }}>
+                {items.length} SOURCES:
+              </span>
+              {photosCount > 0 && <span>📷 {photosCount} {photosCount === 1 ? 'Photo' : 'Photos'}</span>}
+              {videosCount > 0 && <span>🎥 {videosCount} {videosCount === 1 ? 'Video' : 'Videos'}</span>}
+              {textReportsCount > 0 && <span>📝 {textReportsCount} Text {textReportsCount === 1 ? 'Report' : 'Reports'}</span>}
+            </div>
+
+            {onAddEvidence && (
+              <button
+                onClick={onAddEvidence}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  background: 'none',
+                  border: 'none',
+                  color: '#0284c7',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <Plus size={12} />
+                <span>+ ADD EVIDENCE</span>
+              </button>
+            )}
+          </div>
+
           {displayItems.map(({ evidence, similarityScore }) => (
             <EvidenceCard
               key={evidence.evidence_id}

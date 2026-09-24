@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { Incident, Evidence, IncidentSnapshot, ActionPlan, NeedType } from '@/types/domain';
+import type { Incident, Evidence, IncidentSnapshot, ActionPlan, NeedType, ReportSubmissionResponse } from '@/types/domain';
 import { api } from '@/services/api';
 import {
   DEMO_INCIDENTS,
@@ -13,6 +13,7 @@ import { EvidencePanel } from '@/components/evidence';
 import { WhatChangedBanner, SituationTimeline } from '@/components/timeline';
 import { RecommendationPanel } from '@/components/recommendations';
 import { IncidentMap } from '@/components/map';
+import { AddReportModal } from '@/components/ingestion';
 
 export const CommandCenterPage: React.FC = () => {
   // Source State: Live API vs Demo Simulation
@@ -46,6 +47,11 @@ export const CommandCenterPage: React.FC = () => {
 
   const [recommendationsLoading, setRecommendationsLoading] = useState<boolean>(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
+
+  // Fragmented Information Ingestion State
+  const [isAddReportOpen, setIsAddReportOpen] = useState<boolean>(false);
+  const [targetIncidentId, setTargetIncidentId] = useState<string | null>(null);
+  const [newReportHighlight, setNewReportHighlight] = useState<boolean>(false);
 
   const isMountedRef = useRef(true);
   useEffect(() => {
@@ -344,12 +350,43 @@ export const CommandCenterPage: React.FC = () => {
   // Find latest snapshot for "What Changed?"
   const latestSnapshot = timeline.length > 0 ? timeline[timeline.length - 1] : null;
 
+  const handleOpenAddReport = (incidentId?: string) => {
+    setTargetIncidentId(incidentId || null);
+    setIsAddReportOpen(true);
+  };
+
+  const handleReportSubmitted = async (response: ReportSubmissionResponse) => {
+    setIsAddReportOpen(false);
+
+    // Target the matched incident
+    const targetId = response.incident_id || selectedIncidentId || 'INC-001';
+    setSelectedIncidentId(targetId);
+
+    if (isDemoMode) {
+      if (simulationStep < DEMO_TIMELINE_SNAPSHOTS.length) {
+        handleAdvanceSimulation();
+      } else {
+        const state = getSimulatedState(simulationStep);
+        setIncidents(state.incidents);
+        setSelectedIncident(state.selectedIncident);
+        setEvidence([response.evidence, ...state.evidence]);
+      }
+    } else {
+      await fetchIncidents();
+      await loadIncidentData(targetId);
+    }
+
+    setNewReportHighlight(true);
+    setTimeout(() => setNewReportHighlight(false), 5000);
+  };
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', display: 'flex', flexDirection: 'column' }}>
       {/* Top Operations Header */}
       <Header
         isLiveApi={isLiveApi}
         onToggleSource={toggleSource}
+        onAddReport={() => handleOpenAddReport()}
         attentionCount={incidents.filter(i => i.severity === 'critical' || i.severity === 'high').length || 1}
         isDemoMode={isDemoMode}
         simulationStep={simulationStep}
@@ -407,7 +444,28 @@ export const CommandCenterPage: React.FC = () => {
               loading={detailLoading}
               error={detailError}
               onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
+              onAddEvidence={(id) => handleOpenAddReport(id)}
             />
+
+            {/* Notification alert on new evidence ingestion */}
+            {newReportHighlight && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  backgroundColor: '#f0fdf4',
+                  border: '1px solid #86efac',
+                  color: '#166534',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                }}
+              >
+                <span>✓ New evidence ingested & matched. Situation evolution and delta summary updated below.</span>
+              </div>
+            )}
 
             {/* ROW 3: What Changed? */}
             <WhatChangedBanner
@@ -432,6 +490,7 @@ export const CommandCenterPage: React.FC = () => {
                   loading={evidenceLoading}
                   error={evidenceError}
                   onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
+                  onAddEvidence={() => handleOpenAddReport(selectedIncident.incident_id)}
                 />
               </div>
 
@@ -465,6 +524,15 @@ export const CommandCenterPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Information Ingestion Modal */}
+      <AddReportModal
+        isOpen={isAddReportOpen}
+        onClose={() => setIsAddReportOpen(false)}
+        preselectedIncidentId={targetIncidentId}
+        prefillLocation={selectedIncident?.location.address}
+        onReportSubmitted={handleReportSubmitted}
+      />
     </div>
   );
 };

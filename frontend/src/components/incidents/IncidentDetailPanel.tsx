@@ -4,7 +4,7 @@ import { Badge } from '@/components/common/Badge';
 import { Spinner } from '@/components/common/Spinner';
 import { ErrorAlert } from '@/components/common/ErrorAlert';
 import { formatCoordinates, getAccessStatusLabel, formatTime } from '@/lib/formatters';
-import { MapPin, Users, Clock } from 'lucide-react';
+import { MapPin, Users, Clock, Plus } from 'lucide-react';
 
 export interface IncidentDetailPanelProps {
   incident: Incident;
@@ -12,6 +12,7 @@ export interface IncidentDetailPanelProps {
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  onAddEvidence?: (incidentId: string) => void;
 }
 
 export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
@@ -20,6 +21,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
   isLoading = false,
   error,
   onRetry,
+  onAddEvidence,
 }) => {
   const isBusy = loading || isLoading;
 
@@ -97,6 +99,28 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#64748b' }}>
             {formatCoordinates(incident.location.lat, incident.location.lng)}
           </span>
+          {onAddEvidence && (
+            <button
+              onClick={() => onAddEvidence(incident.incident_id)}
+              style={{
+                marginTop: '6px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '4px 10px',
+                borderRadius: '4px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #cbd5e1',
+                color: '#0f172a',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <Plus size={12} color="#0284c7" />
+              <span>+ ADD EVIDENCE</span>
+            </button>
+          )}
         </div>
       </div>
 

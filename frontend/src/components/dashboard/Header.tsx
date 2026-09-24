@@ -3,11 +3,13 @@ import {
   RotateCcw,
   FastForward,
   Server,
+  Plus,
 } from 'lucide-react';
 
 interface HeaderProps {
   isLiveApi: boolean;
   onToggleSource: () => void;
+  onAddReport?: () => void;
   attentionCount?: number;
   // Demo simulation controls
   isDemoMode: boolean;
@@ -21,6 +23,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   isLiveApi,
   onToggleSource,
+  onAddReport,
   attentionCount = 1,
   isDemoMode,
   simulationStep,
@@ -163,6 +166,30 @@ export const Header: React.FC<HeaderProps> = ({
                 <RotateCcw size={12} />
               </button>
             </div>
+          )}
+
+          {/* Primary Ingestion Action: Add Report */}
+          {onAddReport && (
+            <button
+              onClick={onAddReport}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '5px 12px',
+                borderRadius: '4px',
+                backgroundColor: '#0f172a',
+                color: '#ffffff',
+                fontSize: '12px',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.06)',
+              }}
+            >
+              <Plus size={13} />
+              <span>+ ADD REPORT</span>
+            </button>
           )}
 
           {/* Source Toggle: Backend vs Demo */}
