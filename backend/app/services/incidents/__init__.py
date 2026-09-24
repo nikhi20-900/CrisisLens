@@ -1,5 +1,4 @@
-"""Backward compatibility bridge for Member 2 incident service."""
-from app.services.incidents import (
+from app.services.incidents.fusion import (
     IncidentFusionInterface,
     IncidentFusionService,
     incident_fusion_service,

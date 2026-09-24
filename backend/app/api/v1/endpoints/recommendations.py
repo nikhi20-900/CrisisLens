@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from typing import Optional
 from pydantic import BaseModel
 from app.schemas.domain import ActionPlan, VerificationStatus
-from app.services.response_engine import response_engine_service
+from app.services.response import response_engine_service
 
 router = APIRouter()
 

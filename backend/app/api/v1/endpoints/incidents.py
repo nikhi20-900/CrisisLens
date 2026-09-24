@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 from app.schemas.domain import Incident, IncidentSnapshot, EvidenceLink
-from app.services.incident_fusion import incident_fusion_service
+from app.services.incidents import incident_fusion_service
 
 router = APIRouter()
 

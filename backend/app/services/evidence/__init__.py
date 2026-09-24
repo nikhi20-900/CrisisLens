@@ -1,5 +1,4 @@
-"""Backward compatibility bridge for Member 1 evidence service."""
-from app.services.evidence import (
+from app.services.evidence.analysis import (
     EvidenceAnalysisInterface,
     MockEvidenceAnalysisService,
     evidence_analyzer,

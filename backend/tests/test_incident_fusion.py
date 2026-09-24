@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime
 from app.schemas.domain import Evidence, Location, NeedType, AccessStatus, SeverityLevel, EvidenceConfidence
-from app.services.incident_fusion import IncidentFusionService
+from app.services.incidents import IncidentFusionService
 
 
 @pytest.mark.asyncio

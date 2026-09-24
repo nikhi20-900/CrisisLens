@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 from app.schemas.domain import Report, Evidence
-from app.services.evidence_analysis import evidence_analyzer
-from app.services.incident_fusion import incident_fusion_service
-from app.services.response_engine import response_engine_service
+from app.services.evidence import evidence_analyzer
+from app.services.incidents import incident_fusion_service
+from app.services.response import response_engine_service
 
 router = APIRouter()
 

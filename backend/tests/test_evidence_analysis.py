@@ -1,6 +1,6 @@
 import pytest
 from app.schemas.domain import Report, Location, MediaItem, DisasterType, SeverityLevel, NeedType, AccessStatus
-from app.services.evidence_analysis import MockEvidenceAnalysisService
+from app.services.evidence import MockEvidenceAnalysisService
 
 
 @pytest.mark.asyncio

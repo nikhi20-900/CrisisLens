@@ -11,7 +11,7 @@ from app.schemas.domain import (
     VerificationStatus,
     ResourceAvailability,
 )
-from app.services.response_engine import ResponseEngineService
+from app.services.response import ResponseEngineService
 
 
 @pytest.mark.asyncio

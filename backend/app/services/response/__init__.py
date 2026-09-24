@@ -1,5 +1,4 @@
-"""Backward compatibility bridge for Member 3 response service."""
-from app.services.response import (
+from app.services.response.engine import (
     ResponseEngineInterface,
     ResponseEngineService,
     response_engine_service,
