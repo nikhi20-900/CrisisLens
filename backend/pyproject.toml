@@ -27,3 +27,8 @@ dev = [
 testpaths = ["tests"]
 python_files = "test_*.py"
 pythonpath = ["."]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+extraPaths = ["."]
