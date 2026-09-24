@@ -4,6 +4,7 @@ import { IncidentCard } from '@/components/incidents/IncidentCard';
 import { IncidentDetailPanel } from '@/components/incidents/IncidentDetailPanel';
 import { NeedsPanel } from '@/components/incidents/NeedsPanel';
 import { PriorityDisplay } from '@/components/incidents/PriorityDisplay';
+import { ContradictionAlert } from '@/components/incidents/ContradictionAlert';
 import { EvidenceCard } from '@/components/evidence/EvidenceCard';
 import { EvidencePanel } from '@/components/evidence/EvidencePanel';
 import { WhatChangedBanner } from '@/components/timeline/WhatChangedBanner';
@@ -12,6 +13,7 @@ import { RecommendationPanel } from '@/components/recommendations/Recommendation
 import { AddReportModal } from '@/components/ingestion/AddReportModal';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorAlert } from '@/components/common/ErrorAlert';
+import { CommandCenterPage } from '@/pages/CommandCenter/CommandCenterPage';
 import {
   demoIncidents,
   demoSnapshots,
@@ -178,6 +180,33 @@ describe('CrisisLens Command Center Components', () => {
     expect(onAddEvidence).toHaveBeenCalledWith('INC-001');
   });
 
+  it('renders ContradictionAlert with calm review evidence action', () => {
+    const onReview = vi.fn();
+    render(
+      <ContradictionAlert
+        contradictions={[
+          {
+            contradiction_id: 'C-01',
+            field_name: 'access_status',
+            claim_a: { statement: 'One report says the road is accessible.' },
+            claim_b: { statement: 'A later video indicates vehicles cannot pass.' },
+            requires_human_resolution: true,
+            resolved: false,
+          },
+        ]}
+        onReviewEvidence={onReview}
+      />
+    );
+
+    expect(screen.getByText('CONFLICTING REPORTS')).toBeInTheDocument();
+    expect(screen.getByText(/road is accessible/i)).toBeInTheDocument();
+    expect(screen.getByText(/vehicles cannot pass/i)).toBeInTheDocument();
+
+    const reviewBtn = screen.getByRole('button', { name: /\[ REVIEW EVIDENCE \]/i });
+    fireEvent.click(reviewBtn);
+    expect(onReview).toHaveBeenCalled();
+  });
+
   it('renders AddReportModal, handles preset and confirms addition to incident', async () => {
     const onClose = vi.fn();
     const onSubmitted = vi.fn();
@@ -226,5 +255,42 @@ describe('CrisisLens Command Center Components', () => {
     fireEvent.click(viewIncidentBtn);
 
     expect(onSubmitted).toHaveBeenCalled();
+  });
+
+  it('renders CommandCenterPage with top bar, operational summary, and full 1-to-8 operational information hierarchy', async () => {
+    render(<CommandCenterPage />);
+
+    // Top Bar items
+    expect(screen.getByText('CRISISLENS')).toBeInTheDocument();
+    expect(screen.getByText('LIVE')).toBeInTheDocument();
+    expect(screen.getByText('INCIDENTS')).toBeInTheDocument();
+    expect(screen.getAllByText('MAP').length).toBeGreaterThan(0);
+    expect(screen.getByText(/\+ ADD REPORT/i)).toBeInTheDocument();
+
+    // Section 2: "Needs Attention" Operational Summary
+    expect(screen.getByText(/INCIDENT NEEDS ATTENTION|INCIDENTS NEED ATTENTION/i)).toBeInTheDocument();
+
+    // Wait for incident selection and 1-to-8 Hierarchy check
+    await waitFor(() => {
+      expect(screen.getByText('NOW')).toBeInTheDocument();
+    });
+
+    // 1. INCIDENT & 2. NOW
+    expect(screen.getByText('NOW')).toBeInTheDocument();
+
+    // 3. WHAT CHANGED
+    expect(screen.getByText('WHAT CHANGED?')).toBeInTheDocument();
+
+    // 4. EVIDENCE
+    expect(screen.getByText('EVIDENCE')).toBeInTheDocument();
+
+    // 5. CURRENT NEEDS
+    expect(screen.getByText('CURRENT NEEDS')).toBeInTheDocument();
+
+    // 6. PRIORITY
+    expect(screen.getByText('PRIORITY')).toBeInTheDocument();
+
+    // 7. RECOMMENDED RESPONSE
+    expect(screen.getByText('RECOMMENDED RESPONSE')).toBeInTheDocument();
   });
 });

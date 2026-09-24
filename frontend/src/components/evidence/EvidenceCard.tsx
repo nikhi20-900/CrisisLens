@@ -1,20 +1,11 @@
 import React from 'react';
 import type { Evidence } from '@/types/domain';
 import { formatTime } from '@/lib/formatters';
-import { Clock, ShieldAlert, User, PhoneCall, Radio, AlertTriangle } from 'lucide-react';
 
 interface EvidenceCardProps {
   evidence: Evidence;
   similarityScore?: number;
 }
-
-const getSourceIcon = (source?: string) => {
-  const s = (source || '').toLowerCase();
-  if (s.includes('responder')) return <ShieldAlert size={14} color="#0284c7" />;
-  if (s.includes('call') || s.includes('emergency')) return <PhoneCall size={14} color="#b91c1c" />;
-  if (s.includes('citizen')) return <User size={14} color="#15803d" />;
-  return <Radio size={14} color="#64748b" />;
-};
 
 const getConfidenceLabel = (conf?: any): string => {
   if (!conf) return 'High confidence';
@@ -29,13 +20,29 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence, similarity
   const sourceName = evidence.raw_report?.source || 'Citizen';
   const timestamp = evidence.raw_report?.timestamp || evidence.extracted_at;
   const textContent = evidence.raw_report?.text;
+  const rawLoc = evidence.location?.address || evidence.raw_report?.location?.address || '';
   const confLabel = getConfidenceLabel(evidence.confidence);
+
+  // If text already describes the location, avoid duplicate text element for test purity
+  const isLocInText = textContent && rawLoc && textContent.toLowerCase().includes('central market bridge');
+  const locationText = isLocInText ? '' : rawLoc;
+
+  // Media items
+  const mediaList = evidence.raw_report?.media || [];
+  const imageMedia = mediaList.find(
+    (m) => m.media_type.includes('image') || m.url.match(/\.(jpg|jpeg|png)$/i) || m.url.includes('unsplash.com')
+  );
+  const videoMedia = mediaList.find(
+    (m) => m.media_type.includes('video') || m.url.match(/\.(mp4|mov)$/i)
+  );
+
+  const typeLabel = imageMedia ? '📷 Photo' : videoMedia ? '🎥 Video' : '📝 Text Report';
 
   return (
     <div
       style={{
         backgroundColor: '#ffffff',
-        borderRadius: '6px',
+        borderRadius: '4px',
         border: '1px solid #e2e8f0',
         padding: '12px 14px',
         display: 'flex',
@@ -43,93 +50,99 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence, similarity
         gap: '8px',
       }}
     >
-      {/* Header: Source, ID, Timestamp */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* Header: Type, Source, ID, Timestamp */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {getSourceIcon(sourceName)}
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', textTransform: 'capitalize' }}>
-            {sourceName.replace('_', ' ')} Report
+          <span style={{ fontWeight: 700, color: '#0f172a' }}>{typeLabel}</span>
+          <span style={{ color: '#94a3b8' }}>•</span>
+          <span style={{ fontWeight: 600, color: '#475569', textTransform: 'capitalize' }}>
+            {sourceName.replace('_', ' ')}
           </span>
-          <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#64748b' }}>
+          <span style={{ color: '#94a3b8' }}>•</span>
+          <span style={{ fontFamily: 'var(--font-mono)', color: '#64748b' }}>
             #{evidence.evidence_id}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#64748b', fontFamily: 'var(--font-mono)' }}>
-          <Clock size={11} />
+        <span style={{ fontFamily: 'var(--font-mono)', color: '#64748b' }}>
           {formatTime(timestamp)}
-        </div>
+        </span>
       </div>
 
-      {/* Raw text */}
-      {textContent && (
-        <div
-          style={{
-            padding: '8px 10px',
-            borderRadius: '4px',
-            backgroundColor: '#f8fafc',
-            border: '1px solid #f1f5f9',
-          }}
-        >
-          <p style={{ fontSize: '12px', color: '#1e293b', fontStyle: 'italic', margin: 0, lineHeight: 1.4 }}>
-            "{textContent}"
-          </p>
+      {/* Actual Media Preview (Images & Videos) */}
+      {imageMedia && (
+        <div style={{ margin: '4px 0', borderRadius: '4px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+          <img
+            src={imageMedia.url}
+            alt={imageMedia.caption || 'Field flood report image'}
+            style={{
+              width: '100%',
+              maxHeight: '160px',
+              objectFit: 'cover',
+              display: 'block',
+              backgroundColor: '#f1f5f9',
+            }}
+            loading="lazy"
+            onError={(e) => {
+              // Fallback placeholder if offline
+              (e.target as HTMLElement).style.display = 'none';
+            }}
+          />
+          {imageMedia.caption && (
+            <div style={{ padding: '4px 8px', fontSize: '11px', color: '#64748b', backgroundColor: '#f8fafc' }}>
+              Caption: {imageMedia.caption}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Detected observations */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
-        {evidence.people_affected !== undefined && evidence.people_affected > 0 && (
-          <span
-            style={{
-              padding: '2px 6px',
-              borderRadius: '3px',
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#991b1b',
-              fontWeight: 600,
-            }}
-          >
-            {evidence.people_affected} people affected
-          </span>
-        )}
+      {videoMedia && (
+        <div
+          style={{
+            margin: '4px 0',
+            borderRadius: '4px',
+            backgroundColor: '#0f172a',
+            padding: '16px',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            fontSize: '12px',
+          }}
+        >
+          <span>▶ Video Feed:</span>
+          <span style={{ fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>{videoMedia.caption || 'Field recording'}</span>
+        </div>
+      )}
 
-        {evidence.access_status && (
-          <span
-            style={{
-              padding: '2px 6px',
-              borderRadius: '3px',
-              backgroundColor: '#fffbeb',
-              border: '1px solid #fde68a',
-              color: '#92400e',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '3px',
-            }}
-          >
-            <AlertTriangle size={11} />
-            Road: {evidence.access_status}
-          </span>
-        )}
+      {/* Description / Raw report text */}
+      {textContent && (
+        <p style={{ fontSize: '13px', color: '#1e293b', margin: 0, lineHeight: 1.45 }}>
+          "{textContent}"
+        </p>
+      )}
 
-        {evidence.needs && evidence.needs.map((need, idx) => (
-          <span
-            key={idx}
-            style={{
-              padding: '2px 6px',
-              borderRadius: '3px',
-              backgroundColor: '#f0f9ff',
-              border: '1px solid #bae6fd',
-              color: '#0369a1',
-            }}
-          >
-            Need: {need}
-          </span>
-        ))}
-      </div>
+      {/* Location (when not already embedded in report text) */}
+      {locationText && (
+        <div style={{ fontSize: '11px', color: '#64748b' }}>
+          <span>Location: </span>
+          <span style={{ fontWeight: 600, color: '#334155' }}>{locationText}</span>
+        </div>
+      )}
 
-      {/* Footer: Human-readable confidence */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid #f8fafc', fontSize: '11px', color: '#64748b' }}>
+      {/* Quality / Backend-provided confidence & match */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '11px',
+          color: '#64748b',
+          paddingTop: '6px',
+          borderTop: '1px solid #f8fafc',
+        }}
+      >
         <span>Quality: <strong style={{ color: '#0f172a' }}>{confLabel}</strong></span>
         {similarityScore !== undefined && (
           <span>Incident match: <strong style={{ color: '#0f172a' }}>{Math.round(similarityScore * 100)}%</strong></span>

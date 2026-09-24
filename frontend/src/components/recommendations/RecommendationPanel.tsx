@@ -1,21 +1,10 @@
 import React, { useState } from 'react';
 import type { ActionPlan } from '@/types/domain';
-import { Card } from '@/components/common/Card';
-import { Badge } from '@/components/common/Badge';
-import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { ErrorAlert } from '@/components/common/ErrorAlert';
 import { EmptyState } from '@/components/common/EmptyState';
 import { VerificationModal } from './VerificationModal';
-import {
-  ShieldCheck,
-  XCircle,
-  Edit3,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Truck,
-} from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface RecommendationPanelProps {
   recommendations: ActionPlan[];
@@ -45,40 +34,20 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   } | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const handleAction = async (notes: string) => {
     if (!activeModal) return;
     setSubmitting(true);
-    setFeedback(null);
 
     try {
       if (activeModal.type === 'approve') {
         await onVerify(activeModal.rec.action_id, notes);
-        setFeedback({
-          type: 'success',
-          message: `Recommendation approved: Action Plan #${activeModal.rec.action_id} verified.`,
-        });
       } else if (activeModal.type === 'reject') {
         await onReject(activeModal.rec.action_id, notes);
-        setFeedback({
-          type: 'success',
-          message: `Recommendation rejected: Action Plan #${activeModal.rec.action_id} rejected.`,
-        });
       } else if (activeModal.type === 'edit') {
         await onEdit(activeModal.rec.action_id, notes);
-        setFeedback({
-          type: 'success',
-          message: `Recommendation updated & approved: Action Plan #${activeModal.rec.action_id}.`,
-        });
       }
       setActiveModal(null);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to record response decision';
-      setFeedback({
-        type: 'error',
-        message: msg,
-      });
     } finally {
       setSubmitting(false);
     }
@@ -86,54 +55,47 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
 
   return (
     <>
-      <Card
-        title="Recommended Operational Response"
-        icon={<ShieldCheck size={16} color="#0f172a" />}
-        headerExtra={
-          <span style={{ fontSize: '11px', color: '#64748b' }}>
-            Human Decision Required
-          </span>
-        }
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '4px',
+          border: '1px solid #e2e8f0',
+          padding: '16px 18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+        }}
       >
-        {feedback && (
-          <div
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3
             style={{
-              marginBottom: '12px',
-              padding: '10px 14px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: feedback.type === 'success' ? '#f0fdf4' : '#fef2f2',
-              border: feedback.type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca',
-              color: feedback.type === 'success' ? '#166534' : '#991b1b',
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: '#475569',
+              fontWeight: 700,
+              margin: 0,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {feedback.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-              <span>{feedback.message}</span>
-            </div>
-            <button
-              onClick={() => setFeedback(null)}
-              style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '14px' }}
-            >
-              ×
-            </button>
-          </div>
-        )}
+            RECOMMENDED RESPONSE
+          </h3>
+          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+            Decision Support
+          </span>
+        </div>
 
         {isBusy ? (
-          <Spinner message="Generating response recommendations..." />
+          <Spinner message="Retrieving response recommendation..." />
         ) : error ? (
           <ErrorAlert message={error} onRetry={onRetry} />
         ) : recommendations.length === 0 ? (
           <EmptyState
-            title="No Recommendations Generated"
-            message="No action plans have been proposed for this incident yet."
+            title="No Recommendations"
+            message="No response actions currently proposed."
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {recommendations.map((rec) => {
               const isPending = rec.verification_status === 'pending';
               const isApproved = rec.verification_status === 'approved' || rec.verification_status === 'edited';
@@ -143,49 +105,94 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                 <div
                   key={rec.action_id}
                   style={{
-                    padding: '14px 16px',
-                    borderRadius: '6px',
+                    padding: '12px 14px',
+                    borderRadius: '4px',
                     border: isPending
-                      ? '1px solid #fde68a'
+                      ? '1px solid #e2e8f0'
                       : isApproved
                       ? '1px solid #bbf7d0'
-                      : '1px solid #e2e8f0',
-                    backgroundColor: isPending ? '#fffbeb' : isApproved ? '#f0fdf4' : '#f8fafc',
+                      : '1px solid #fecaca',
+                    backgroundColor: isApproved ? '#f0fdf4' : isRejected ? '#fef2f2' : '#ffffff',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px',
+                    gap: '8px',
                   }}
                 >
-                  {/* Top Bar: Action Title & Status */}
+                  {/* Action Plan Title & Status */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
-                          RECOMMENDED ACTION PLAN #{rec.action_id}
-                        </span>
-                        <Badge variant={rec.priority_level} size="sm">
-                          {rec.priority_level} priority
-                        </Badge>
-                      </div>
-                      <p style={{ fontSize: '12px', color: '#334155', margin: 0, lineHeight: 1.4 }}>
-                        {rec.resource_rationale}
-                      </p>
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontFamily: 'var(--font-mono)',
+                          color: '#94a3b8',
+                          display: 'block',
+                        }}
+                      >
+                        RECOMMENDED ACTION PLAN #{rec.action_id}
+                      </span>
+                      <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '2px 0 0 0' }}>
+                        Deploy nearby rescue team
+                      </h4>
+                      {rec.resource_rationale && (
+                        <p style={{ fontSize: '12px', color: '#475569', margin: '3px 0 0 0', lineHeight: 1.4 }}>
+                          {rec.resource_rationale}
+                        </p>
+                      )}
                     </div>
 
                     <div>
                       {isPending && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#92400e', backgroundColor: '#fef3c7', border: '1px solid #fde68a', padding: '2px 8px', borderRadius: '3px' }}>
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '2px',
+                            backgroundColor: '#f1f5f9',
+                            color: '#475569',
+                            border: '1px solid #cbd5e1',
+                          }}
+                        >
                           PENDING VERIFICATION
                         </span>
                       )}
                       {isApproved && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#166534', backgroundColor: '#dcfce7', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '3px' }}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '2px',
+                            backgroundColor: '#dcfce7',
+                            color: '#166534',
+                            border: '1px solid #86efac',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
                           <CheckCircle2 size={12} />
-                          VERIFIED
+                          RECOMMENDATION VERIFIED
                         </span>
                       )}
                       {isRejected && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#991b1b', backgroundColor: '#fee2e2', border: '1px solid #fecaca', padding: '2px 8px', borderRadius: '3px' }}>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '2px',
+                            backgroundColor: '#fee2e2',
+                            color: '#991b1b',
+                            border: '1px solid #fecaca',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
                           <XCircle size={12} />
                           REJECTED
                         </span>
@@ -193,55 +200,44 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                     </div>
                   </div>
 
-                  {/* Allocated Resources & ETAs */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748b' }}>
-                      Available Resources & Staged Units:
+                  {/* Nearby Resources & ETA */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Nearby resource:
                     </span>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
-                      {rec.recommended_resources.map((res) => (
-                        <div
-                          key={res.resource_id}
-                          style={{
-                            padding: '8px 12px',
-                            borderRadius: '4px',
-                            backgroundColor: '#ffffff',
-                            border: '1px solid #cbd5e1',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '2px',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <strong style={{ fontSize: '12px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Truck size={12} color="#0284c7" />
-                              {res.name}
-                            </strong>
-                            {res.estimated_eta_minutes && (
-                              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#15803d', display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
-                                <Clock size={11} />
-                                {res.estimated_eta_minutes}m ETA
-                              </span>
-                            )}
-                          </div>
-                          <span style={{ fontSize: '11px', color: '#64748b' }}>
-                            Type: {res.resource_type.replace('_', ' ')} • Capacity: {res.capacity}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    {rec.recommended_resources.map((res) => (
+                      <div
+                        key={res.resource_id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '6px 10px',
+                          borderRadius: '4px',
+                          backgroundColor: '#f8fafc',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600, color: '#0f172a' }}>
+                          {res.name}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#166534', fontWeight: 600 }}>
+                          ETA: {res.estimated_eta_minutes ? `${res.estimated_eta_minutes} min` : 'Available nearby'}
+                        </span>
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Why / Scoring Rationale */}
+                  {/* Why */}
                   {rec.priority_rationale && rec.priority_rationale.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748b' }}>
-                        Why (Decision Rationale):
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '12px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Why:
                       </span>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         {rec.priority_rationale.map((line, idx) => (
-                          <li key={idx} style={{ fontSize: '12px', color: '#334155', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                            <span style={{ color: '#0284c7' }}>•</span>
+                          <li key={idx} style={{ color: '#334155', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                            <span style={{ color: '#64748b' }}>•</span>
                             <span>{line}</span>
                           </li>
                         ))}
@@ -249,43 +245,53 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                     </div>
                   )}
 
-                  {/* Action Controls for Human Verification */}
+                  {/* Human Decision Verification Actions */}
                   {isPending ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        icon={<Edit3 size={12} />}
-                        onClick={() => setActiveModal({ type: 'edit', rec })}
-                      >
-                        Edit Notes
-                      </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        icon={<XCircle size={12} />}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                      <button
+                        type="button"
                         onClick={() => setActiveModal({ type: 'reject', rec })}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #cbd5e1',
+                          color: '#991b1b',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
                       >
-                        Reject
-                      </Button>
-                      <Button
-                        variant="success"
-                        size="sm"
-                        icon={<ShieldCheck size={12} />}
+                        [ REJECT ]
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => setActiveModal({ type: 'approve', rec })}
+                        style={{
+                          padding: '6px 16px',
+                          borderRadius: '4px',
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #0f172a',
+                          color: '#ffffff',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
                       >
                         Verify Action
-                      </Button>
+                      </button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid #e2e8f0', fontSize: '11px', color: '#64748b' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid #f1f5f9', fontSize: '11px', color: '#64748b' }}>
                       <span>
-                        Status: <strong style={{ color: '#0f172a' }}>{isApproved ? 'Approved by Responder' : 'Rejected by Responder'}</strong>
+                        {isApproved ? 'Recommendation verified by human responder' : 'Recommendation rejected'}
                         {rec.verified_by && ` (${rec.verified_by})`}
                       </span>
                       <button
-                        onClick={() => setActiveModal({ type: isApproved ? 'edit' : 'approve', rec })}
-                        style={{ background: 'transparent', border: 'none', color: '#0284c7', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline' }}
+                        type="button"
+                        onClick={() => setActiveModal({ type: isApproved ? 'reject' : 'approve', rec })}
+                        style={{ background: 'transparent', border: 'none', color: '#0f172a', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline' }}
                       >
                         Change Decision
                       </button>
@@ -296,9 +302,8 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
             })}
           </div>
         )}
-      </Card>
+      </div>
 
-      {/* Verification Modal */}
       {activeModal && (
         <VerificationModal
           isOpen={true}

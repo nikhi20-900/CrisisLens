@@ -578,66 +578,75 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
           {/* STEP 2: CLEAR PROCESSING / ANALYSIS CHECKLIST */}
           {step === 'analyzing' && (
             <div style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Multimodal Evidence Pipeline
+              <div style={{ textAlign: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Processing Evidence
                 </span>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '4px 0' }}>
-                  Analyzing New Evidence
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', margin: '4px 0 0 0' }}>
+                  Analyzing Evidence
                 </h3>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-                  Extracting hazards, entities, and spatial coordinates from raw input.
-                </p>
               </div>
 
               <div
                 style={{
                   backgroundColor: '#f8fafc',
                   border: '1px solid #e2e8f0',
-                  borderRadius: '6px',
-                  padding: '16px 20px',
+                  borderRadius: '4px',
+                  padding: '18px 24px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '14px',
+                  gap: '6px',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <CheckCircle2 size={18} color="#16a34a" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <CheckCircle2 size={16} color="#16a34a" />
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#166534' }}>
-                    Evidence received & logged
+                    Evidence received
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ paddingLeft: '7px' }}>
+                  <span style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: 1 }}>↓</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {analysisStepIndex >= 1 ? (
-                    <CheckCircle2 size={18} color="#16a34a" />
+                    <CheckCircle2 size={16} color="#16a34a" />
                   ) : (
-                    <span style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #0284c7', display: 'inline-block' }} />
+                    <span style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #0284c7', display: 'inline-block' }} />
                   )}
                   <span style={{ fontSize: '13px', fontWeight: 600, color: analysisStepIndex >= 1 ? '#0f172a' : '#64748b' }}>
-                    Extracting disaster features & relief needs...
+                    Analyzing
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ paddingLeft: '7px' }}>
+                  <span style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: 1 }}>↓</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {analysisStepIndex >= 2 ? (
-                    <CheckCircle2 size={18} color="#16a34a" />
+                    <CheckCircle2 size={16} color="#16a34a" />
                   ) : (
-                    <span style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #cbd5e1', display: 'inline-block' }} />
+                    <span style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #cbd5e1', display: 'inline-block' }} />
                   )}
                   <span style={{ fontSize: '13px', fontWeight: 600, color: analysisStepIndex >= 2 ? '#0f172a' : '#64748b' }}>
-                    Checking spatial coordinates & access status...
+                    Related incident found
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ paddingLeft: '7px' }}>
+                  <span style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: 1 }}>↓</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {analysisStepIndex >= 3 ? (
-                    <CheckCircle2 size={18} color="#16a34a" />
+                    <CheckCircle2 size={16} color="#16a34a" />
                   ) : (
-                    <span style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #cbd5e1', display: 'inline-block' }} />
+                    <span style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #cbd5e1', display: 'inline-block' }} />
                   )}
                   <span style={{ fontSize: '13px', fontWeight: 600, color: analysisStepIndex >= 3 ? '#0f172a' : '#64748b' }}>
-                    Comparing with active evolving incidents...
+                    Added to incident
                   </span>
                 </div>
               </div>
@@ -728,26 +737,39 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
                   <span>✓ Corroborated flood context & blocked access</span>
                 </div>
 
-                {/* Visual Architecture Representation (Requirement 6) */}
+                {/* Core CrisisLens Transformation (Section 14) */}
                 <div
                   style={{
                     backgroundColor: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '4px',
-                    padding: '8px 12px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    padding: '12px 14px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '11px',
-                    color: '#475569',
-                    fontFamily: 'var(--font-mono)',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    fontSize: '12px',
                   }}
                 >
-                  <span>📷 Photo + 📝 Citizen report + 🎥 Video</span>
-                  <ArrowRight size={13} color="#0284c7" />
-                  <span style={{ fontWeight: 700, color: '#0f172a' }}>INC-001 Flooding</span>
-                  <ArrowRight size={13} color="#0284c7" />
-                  <span style={{ fontWeight: 700, color: '#16a34a' }}>One Evolving Incident</span>
+                  <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b' }}>
+                    CrisisLens Intelligence Transformation
+                  </span>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, color: '#0f172a' }}>NEW REPORT:</span>
+                    <span style={{ color: '#334155' }}>
+                      {contentType === 'image' ? '📷 Photo' : contentType === 'video' ? '🎥 Video' : '📝 Text'} • "{text.slice(0, 50)}..."
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0284c7', fontWeight: 700, paddingLeft: '8px' }}>
+                    <ArrowRight size={13} />
+                    <span>MATCHED TO: {submissionResult.incident_id} — Flooding — Bridge Road</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#166534', fontWeight: 700, paddingLeft: '8px' }}>
+                    <ArrowRight size={13} />
+                    <span>EVOLVING INCIDENT: 5 sources now support this incident</span>
+                  </div>
                 </div>
               </div>
             </div>
