@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { IncidentCard } from '@/components/incidents/IncidentCard';
 import { IncidentDetailPanel } from '@/components/incidents/IncidentDetailPanel';
 import { NeedsPanel } from '@/components/incidents/NeedsPanel';
@@ -121,9 +121,14 @@ describe('CrisisLens Command Center Components', () => {
 
     // Confirm verification inside modal
     const confirmBtn = screen.getByRole('button', { name: /Verify Recommendation/i });
-    await fireEvent.click(confirmBtn);
+    fireEvent.click(confirmBtn);
 
-    expect(onVerify).toHaveBeenCalledWith('ACT-001', '');
+    await waitFor(() => {
+      expect(onVerify).toHaveBeenCalledWith('ACT-001', '');
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('Verify & Approve Recommendation')).not.toBeInTheDocument();
+    });
   });
 
   it('renders EmptyState and ErrorAlert correctly', () => {
