@@ -1,8 +1,7 @@
 import React from 'react';
 import type { Evidence } from '@/types/domain';
-import { Badge } from '@/components/common/Badge';
-import { formatTime } from '@/lib';
-import { User, ShieldAlert, Radio, Cpu, Camera, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { formatTime } from '@/lib/formatters';
+import { Clock, ShieldAlert, User, PhoneCall, Radio, AlertTriangle } from 'lucide-react';
 
 interface EvidenceCardProps {
   evidence: Evidence;
@@ -10,56 +9,54 @@ interface EvidenceCardProps {
 }
 
 const getSourceIcon = (source?: string) => {
-  switch (source) {
-    case 'responder':
-      return <ShieldAlert className="w-3.5 h-3.5 text-blue-400" />;
-    case 'citizen':
-      return <User className="w-3.5 h-3.5 text-emerald-400" />;
-    case 'sensor':
-      return <Cpu className="w-3.5 h-3.5 text-amber-400" />;
-    case 'drone':
-      return <Camera className="w-3.5 h-3.5 text-purple-400" />;
-    case 'social':
-    default:
-      return <Radio className="w-3.5 h-3.5 text-pink-400" />;
-  }
+  const s = (source || '').toLowerCase();
+  if (s.includes('responder')) return <ShieldAlert size={14} color="#0284c7" />;
+  if (s.includes('call') || s.includes('emergency')) return <PhoneCall size={14} color="#b91c1c" />;
+  if (s.includes('citizen')) return <User size={14} color="#15803d" />;
+  return <Radio size={14} color="#64748b" />;
+};
+
+const getConfidenceLabel = (conf?: any): string => {
+  if (!conf) return 'High confidence';
+  const scores = typeof conf === 'object' ? Object.values(conf) : [conf];
+  const avg = scores.reduce((a: any, b: any) => Number(a) + Number(b), 0) / scores.length;
+  if (avg >= 0.8) return 'High confidence';
+  if (avg >= 0.6) return 'Moderate confidence';
+  return 'Low confidence';
 };
 
 export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence, similarityScore }) => {
-  // Average confidence score across dimensions
-  const confScores = evidence.confidence ? Object.values(evidence.confidence) : [0.9];
-  const avgConf = confScores.reduce((a, b) => a + b, 0) / confScores.length;
-  const confPct = Math.round(avgConf * 100);
-
   const sourceName = evidence.raw_report?.source || 'Citizen';
   const timestamp = evidence.raw_report?.timestamp || evidence.extracted_at;
   const textContent = evidence.raw_report?.text;
+  const confLabel = getConfidenceLabel(evidence.confidence);
 
   return (
     <div
       style={{
-        padding: '14px',
-        borderRadius: '8px',
-        border: '1px solid var(--border-subtle, #1e293b)',
-        backgroundColor: 'var(--bg-card, #0f172a)',
+        backgroundColor: '#ffffff',
+        borderRadius: '6px',
+        border: '1px solid #e2e8f0',
+        padding: '12px 14px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '10px',
+        gap: '8px',
       }}
     >
-      {/* Header: Source, Time, ID */}
+      {/* Header: Source, ID, Timestamp */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {getSourceIcon(sourceName)}
-          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary, #f8fafc)', textTransform: 'capitalize' }}>
-            {sourceName} Report
+          <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', textTransform: 'capitalize' }}>
+            {sourceName.replace('_', ' ')} Report
           </span>
-          <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted, #64748b)' }}>
+          <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#64748b' }}>
             #{evidence.evidence_id}
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-muted, #64748b)', fontFamily: 'var(--font-mono)' }}>
-          <Clock size={12} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#64748b', fontFamily: 'var(--font-mono)' }}>
+          <Clock size={11} />
           {formatTime(timestamp)}
         </div>
       </div>
@@ -68,112 +65,74 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence, similarity
       {textContent && (
         <div
           style={{
-            padding: '10px',
-            borderRadius: '6px',
-            backgroundColor: 'var(--bg-elevated, #1e293b)',
-            border: '1px solid rgba(255,255,255,0.04)',
+            padding: '8px 10px',
+            borderRadius: '4px',
+            backgroundColor: '#f8fafc',
+            border: '1px solid #f1f5f9',
           }}
         >
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary, #94a3b8)', fontStyle: 'italic', margin: 0, lineHeight: 1.4 }}>
+          <p style={{ fontSize: '12px', color: '#1e293b', fontStyle: 'italic', margin: 0, lineHeight: 1.4 }}>
             "{textContent}"
           </p>
         </div>
       )}
 
-      {/* Extracted Structured Observations */}
-      <div>
-        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted, #64748b)', display: 'block', marginBottom: '6px' }}>
-          Detected Observations
-        </span>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          {evidence.people_affected !== undefined && evidence.people_affected > 0 && (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                backgroundColor: 'rgba(239, 68, 68, 0.15)',
-                color: 'var(--severity-critical, #ef4444)',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
-              }}
-            >
-              <strong>{evidence.people_affected}</strong> people affected
-            </span>
-          )}
+      {/* Detected observations */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
+        {evidence.people_affected !== undefined && evidence.people_affected > 0 && (
+          <span
+            style={{
+              padding: '2px 6px',
+              borderRadius: '3px',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              color: '#991b1b',
+              fontWeight: 600,
+            }}
+          >
+            {evidence.people_affected} people affected
+          </span>
+        )}
 
-          {evidence.access_status && (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                color: '#f59e0b',
-                border: '1px solid rgba(245, 158, 11, 0.35)',
-              }}
-            >
-              <AlertTriangle size={11} />
-              Access: {evidence.access_status}
-            </span>
-          )}
+        {evidence.access_status && (
+          <span
+            style={{
+              padding: '2px 6px',
+              borderRadius: '3px',
+              backgroundColor: '#fffbeb',
+              border: '1px solid #fde68a',
+              color: '#92400e',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '3px',
+            }}
+          >
+            <AlertTriangle size={11} />
+            Road: {evidence.access_status}
+          </span>
+        )}
 
-          {evidence.severity && (
-            <Badge variant={evidence.severity} size="sm">
-              {evidence.severity.toUpperCase()}
-            </Badge>
-          )}
-
-          {evidence.needs && evidence.needs.map((need, idx) => (
-            <span
-              key={idx}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                color: 'var(--color-primary, #38bdf8)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
-              }}
-            >
-              Need: {need}
-            </span>
-          ))}
-        </div>
+        {evidence.needs && evidence.needs.map((need, idx) => (
+          <span
+            key={idx}
+            style={{
+              padding: '2px 6px',
+              borderRadius: '3px',
+              backgroundColor: '#f0f9ff',
+              border: '1px solid #bae6fd',
+              color: '#0369a1',
+            }}
+          >
+            Need: {need}
+          </span>
+        ))}
       </div>
 
-      {/* Footer: Confidence & Fusion Match Score */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: '8px',
-          borderTop: '1px solid rgba(255,255,255,0.04)',
-          fontSize: '11px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ color: 'var(--text-muted, #64748b)' }}>AI Confidence:</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: confPct >= 80 ? '#22c55e' : '#f59e0b' }}>
-            {confPct}%
-          </span>
-        </div>
-
+      {/* Footer: Human-readable confidence */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid #f8fafc', fontSize: '11px', color: '#64748b' }}>
+        <span>Quality: <strong style={{ color: '#0f172a' }}>{confLabel}</strong></span>
         {similarityScore !== undefined && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-primary, #38bdf8)' }}>
-            <CheckCircle2 size={12} />
-            <span style={{ fontSize: '10px', color: 'var(--text-muted, #64748b)' }}>Fusion Match:</span>
-            <span style={{ fontFamily: 'var(--font-mono)' }}>{Math.round(similarityScore * 100)}%</span>
-          </div>
+          <span>Incident match: <strong style={{ color: '#0f172a' }}>{Math.round(similarityScore * 100)}%</strong></span>
         )}
       </div>
     </div>

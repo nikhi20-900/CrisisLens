@@ -26,49 +26,55 @@ export const Button: React.FC<ButtonProps> = ({
       display: 'inline-flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '8px',
-      borderRadius: '6px',
+      gap: '6px',
+      borderRadius: '4px',
       fontWeight: 600,
       cursor: disabled || isBusy ? 'not-allowed' : 'pointer',
       opacity: disabled || isBusy ? 0.6 : 1,
-      transition: 'all 0.15s ease',
-      border: 'none',
+      transition: 'background-color 0.15s ease, border-color 0.15s ease',
+      border: '1px solid transparent',
       ...style,
     };
 
     if (size === 'sm') {
-      base.padding = '6px 12px';
+      base.padding = '4px 10px';
       base.fontSize = '12px';
+      base.lineHeight = '16px';
     } else if (size === 'lg') {
-      base.padding = '12px 24px';
-      base.fontSize = '15px';
+      base.padding = '10px 20px';
+      base.fontSize = '14px';
+      base.lineHeight = '20px';
     } else {
-      base.padding = '8px 16px';
+      base.padding = '6px 14px';
       base.fontSize = '13px';
+      base.lineHeight = '18px';
     }
 
     switch (variant) {
       case 'primary':
-        base.backgroundColor = 'var(--color-primary, #38bdf8)';
-        base.color = '#0a0d14';
+        base.backgroundColor = '#0284c7';
+        base.color = '#ffffff';
+        base.borderColor = '#0284c7';
         break;
       case 'secondary':
-        base.backgroundColor = 'var(--bg-elevated, #1e293b)';
-        base.color = 'var(--text-primary, #f8fafc)';
-        base.border = '1px solid var(--border-subtle, #334155)';
+        base.backgroundColor = '#ffffff';
+        base.color = '#1e293b';
+        base.borderColor = '#cbd5e1';
         break;
       case 'success':
-        base.backgroundColor = '#16a34a';
+        base.backgroundColor = '#15803d';
         base.color = '#ffffff';
+        base.borderColor = '#15803d';
         break;
       case 'danger':
-        base.backgroundColor = '#dc2626';
+        base.backgroundColor = '#b91c1c';
         base.color = '#ffffff';
+        base.borderColor = '#b91c1c';
         break;
       case 'outline':
         base.backgroundColor = 'transparent';
-        base.color = 'var(--text-secondary, #94a3b8)';
-        base.border = '1px solid var(--border-subtle, #334155)';
+        base.color = '#334155';
+        base.borderColor = '#94a3b8';
         break;
     }
 
@@ -81,9 +87,9 @@ export const Button: React.FC<ButtonProps> = ({
         <span
           style={{
             display: 'inline-block',
-            width: '14px',
-            height: '14px',
-            border: '2px solid rgba(255,255,255,0.3)',
+            width: '12px',
+            height: '12px',
+            border: '2px solid rgba(255,255,255,0.4)',
             borderTopColor: '#fff',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',

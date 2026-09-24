@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-interface ModalProps {
+export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
@@ -24,8 +24,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(4px)',
+        backgroundColor: 'rgba(15, 23, 42, 0.6)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -36,14 +35,13 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
     >
       <div
         style={{
-          backgroundColor: 'var(--bg-secondary)',
-          borderRadius: '12px',
-          border: '1px solid var(--border-active)',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)',
+          backgroundColor: '#ffffff',
+          borderRadius: '8px',
+          border: '1px solid #cbd5e1',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
           width: '100%',
           maxWidth: '520px',
           overflow: 'hidden',
-          animation: 'fadeIn 0.2s ease-out',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -52,18 +50,19 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 20px',
-            borderBottom: '1px solid var(--border-subtle)',
-            backgroundColor: 'var(--bg-card)',
+            padding: '14px 18px',
+            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: '#f8fafc',
           }}
         >
-          <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{title}</h3>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{title}</h3>
           <button
             onClick={onClose}
+            aria-label="Close dialog"
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'var(--text-muted)',
+              color: '#64748b',
               cursor: 'pointer',
               display: 'flex',
               padding: '4px',
@@ -72,7 +71,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             <X size={18} />
           </button>
         </div>
-        <div style={{ padding: '20px' }}>{children}</div>
+        <div style={{ padding: '18px' }}>{children}</div>
       </div>
     </div>
   );

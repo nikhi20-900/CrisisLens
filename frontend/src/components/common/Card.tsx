@@ -20,7 +20,6 @@ export const Card: React.FC<CardProps> = ({
   headerAction,
   headerExtra,
   icon,
-  glow = false,
   style,
   className = '',
   onClick,
@@ -32,12 +31,12 @@ export const Card: React.FC<CardProps> = ({
       onClick={onClick}
       className={className}
       style={{
-        backgroundColor: 'var(--bg-card, #0f172a)',
-        borderRadius: '10px',
-        border: glow ? '1px solid var(--border-active, #38bdf8)' : '1px solid var(--border-subtle, #1e293b)',
-        boxShadow: glow ? '0 0 20px rgba(56, 189, 248, 0.15)' : 'var(--shadow-card, 0 4px 6px -1px rgba(0, 0, 0, 0.5))',
+        backgroundColor: '#ffffff',
+        borderRadius: '6px',
+        border: '1px solid #e2e8f0',
+        boxShadow: 'var(--shadow-card, 0 1px 3px 0 rgba(0,0,0,0.06))',
         padding: '16px',
-        transition: 'all 0.2s ease',
+        transition: 'border-color 0.15s ease',
         cursor: onClick ? 'pointer' : 'default',
         ...style,
       }}
@@ -48,23 +47,23 @@ export const Card: React.FC<CardProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: subtitle ? '4px' : '14px',
-            borderBottom: '1px solid var(--border-subtle, #1e293b)',
-            paddingBottom: '10px',
+            marginBottom: subtitle ? '4px' : '12px',
+            borderBottom: '1px solid #f1f5f9',
+            paddingBottom: '8px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {icon && <span>{icon}</span>}
+            {icon && <span style={{ color: '#475569', display: 'flex' }}>{icon}</span>}
             <div>
               {typeof title === 'string' ? (
-                <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary, #f8fafc)', letterSpacing: '-0.01em' }}>
+                <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
                   {title}
                 </h3>
               ) : (
                 title
               )}
               {subtitle && (
-                <p style={{ fontSize: '11px', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>{subtitle}</p>
+                <p style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{subtitle}</p>
               )}
             </div>
           </div>

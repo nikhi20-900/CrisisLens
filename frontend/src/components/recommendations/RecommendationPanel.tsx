@@ -8,7 +8,6 @@ import { ErrorAlert } from '@/components/common/ErrorAlert';
 import { EmptyState } from '@/components/common/EmptyState';
 import { VerificationModal } from './VerificationModal';
 import {
-  Sparkles,
   ShieldCheck,
   XCircle,
   Edit3,
@@ -88,30 +87,27 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   return (
     <>
       <Card
-        title="AI Response Recommendations"
-        icon={<Sparkles size={16} color="#eab308" />}
+        title="Recommended Operational Response"
+        icon={<ShieldCheck size={16} color="#0f172a" />}
         headerExtra={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted, #64748b)' }}>Human Verification Required</span>
-            <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--bg-elevated, #1e293b)', color: '#eab308' }}>
-              {recommendations.length} Action Plans
-            </span>
-          </div>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>
+            Human Decision Required
+          </span>
         }
       >
         {feedback && (
           <div
             style={{
               marginBottom: '12px',
-              padding: '10px',
-              borderRadius: '6px',
+              padding: '10px 14px',
+              borderRadius: '4px',
               fontSize: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: feedback.type === 'success' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              border: feedback.type === 'success' ? '1px solid rgba(34, 197, 94, 0.35)' : '1px solid rgba(239, 68, 68, 0.35)',
-              color: feedback.type === 'success' ? '#22c55e' : '#ef4444',
+              backgroundColor: feedback.type === 'success' ? '#f0fdf4' : '#fef2f2',
+              border: feedback.type === 'success' ? '1px solid #bbf7d0' : '1px solid #fecaca',
+              color: feedback.type === 'success' ? '#166534' : '#991b1b',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -128,17 +124,16 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
         )}
 
         {isBusy ? (
-          <Spinner label="Generating AI response recommendations..." />
+          <Spinner message="Generating response recommendations..." />
         ) : error ? (
           <ErrorAlert message={error} onRetry={onRetry} />
         ) : recommendations.length === 0 ? (
           <EmptyState
-            icon={<Sparkles size={28} color="var(--text-muted, #64748b)" />}
             title="No Recommendations Generated"
-            message="AI response intelligence has not proposed any actions for this incident yet."
+            message="No action plans have been proposed for this incident yet."
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {recommendations.map((rec) => {
               const isPending = rec.verification_status === 'pending';
               const isApproved = rec.verification_status === 'approved' || rec.verification_status === 'edited';
@@ -148,50 +143,49 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                 <div
                   key={rec.action_id}
                   style={{
-                    padding: '16px',
-                    borderRadius: '10px',
+                    padding: '14px 16px',
+                    borderRadius: '6px',
                     border: isPending
-                      ? '1px solid rgba(234, 179, 8, 0.4)'
+                      ? '1px solid #fde68a'
                       : isApproved
-                      ? '1px solid rgba(34, 197, 94, 0.4)'
-                      : '1px solid var(--border-subtle, #1e293b)',
-                    backgroundColor: isPending ? 'var(--bg-card, #0f172a)' : 'rgba(255, 255, 255, 0.02)',
+                      ? '1px solid #bbf7d0'
+                      : '1px solid #e2e8f0',
+                    backgroundColor: isPending ? '#fffbeb' : isApproved ? '#f0fdf4' : '#f8fafc',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '12px',
+                    gap: '10px',
                   }}
                 >
                   {/* Top Bar: Action Title & Status */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary, #f8fafc)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
                           RECOMMENDED ACTION PLAN #{rec.action_id}
                         </span>
                         <Badge variant={rec.priority_level} size="sm">
-                          {rec.priority_level.toUpperCase()} PRIORITY
+                          {rec.priority_level} priority
                         </Badge>
                       </div>
-                      <p style={{ fontSize: '12px', color: 'var(--text-secondary, #94a3b8)', margin: 0 }}>
+                      <p style={{ fontSize: '12px', color: '#334155', margin: 0, lineHeight: 1.4 }}>
                         {rec.resource_rationale}
                       </p>
                     </div>
 
                     <div>
                       {isPending && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 600, color: '#eab308', backgroundColor: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.35)', padding: '4px 10px', borderRadius: '9999px' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#eab308' }} />
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#92400e', backgroundColor: '#fef3c7', border: '1px solid #fde68a', padding: '2px 8px', borderRadius: '3px' }}>
                           PENDING VERIFICATION
                         </span>
                       )}
                       {isApproved && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 600, color: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.35)', padding: '4px 10px', borderRadius: '9999px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#166534', backgroundColor: '#dcfce7', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '3px' }}>
                           <CheckCircle2 size={12} />
                           VERIFIED
                         </span>
                       )}
                       {isRejected && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 600, color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', padding: '4px 10px', borderRadius: '9999px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#991b1b', backgroundColor: '#fee2e2', border: '1px solid #fecaca', padding: '2px 8px', borderRadius: '3px' }}>
                           <XCircle size={12} />
                           REJECTED
                         </span>
@@ -199,39 +193,39 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                     </div>
                   </div>
 
-                  {/* Allocated Resources */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted, #64748b)' }}>
-                      Allocated Resources & ETAs:
+                  {/* Allocated Resources & ETAs */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748b' }}>
+                      Available Resources & Staged Units:
                     </span>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
                       {rec.recommended_resources.map((res) => (
                         <div
                           key={res.resource_id}
                           style={{
-                            padding: '10px 12px',
-                            borderRadius: '6px',
-                            backgroundColor: 'var(--bg-elevated, #1e293b)',
-                            border: '1px solid var(--border-subtle, #334155)',
+                            padding: '8px 12px',
+                            borderRadius: '4px',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid #cbd5e1',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '4px',
+                            gap: '2px',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <strong style={{ fontSize: '12px', color: 'var(--color-primary, #38bdf8)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Truck size={12} />
+                            <strong style={{ fontSize: '12px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Truck size={12} color="#0284c7" />
                               {res.name}
                             </strong>
                             {res.estimated_eta_minutes && (
-                              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#22c55e', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#15803d', display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
                                 <Clock size={11} />
                                 {res.estimated_eta_minutes}m ETA
                               </span>
                             )}
                           </div>
-                          <span style={{ fontSize: '11px', color: 'var(--text-muted, #64748b)' }}>
-                            Type: {res.resource_type} • Capacity: {res.capacity}
+                          <span style={{ fontSize: '11px', color: '#64748b' }}>
+                            Type: {res.resource_type.replace('_', ' ')} • Capacity: {res.capacity}
                           </span>
                         </div>
                       ))}
@@ -240,14 +234,14 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
 
                   {/* Why / Scoring Rationale */}
                   {rec.priority_rationale && rec.priority_rationale.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted, #64748b)' }}>
-                        Why (AI Intelligence Rationale):
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#64748b' }}>
+                        Why (Decision Rationale):
                       </span>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         {rec.priority_rationale.map((line, idx) => (
-                          <li key={idx} style={{ fontSize: '12px', color: 'var(--text-secondary, #94a3b8)', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                            <span style={{ color: '#eab308' }}>•</span>
+                          <li key={idx} style={{ fontSize: '12px', color: '#334155', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                            <span style={{ color: '#0284c7' }}>•</span>
                             <span>{line}</span>
                           </li>
                         ))}
@@ -257,7 +251,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
 
                   {/* Action Controls for Human Verification */}
                   {isPending ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px', borderTop: '1px solid var(--border-subtle, #1e293b)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
                       <Button
                         variant="secondary"
                         size="sm"
@@ -284,14 +278,14 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       </Button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--border-subtle, #1e293b)', fontSize: '11px', color: 'var(--text-muted, #64748b)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid #e2e8f0', fontSize: '11px', color: '#64748b' }}>
                       <span>
-                        Status: <strong>{isApproved ? 'Approved by Responder' : 'Rejected by Responder'}</strong>
+                        Status: <strong style={{ color: '#0f172a' }}>{isApproved ? 'Approved by Responder' : 'Rejected by Responder'}</strong>
                         {rec.verified_by && ` (${rec.verified_by})`}
                       </span>
                       <button
                         onClick={() => setActiveModal({ type: isApproved ? 'edit' : 'approve', rec })}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--color-primary, #38bdf8)', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline' }}
+                        style={{ background: 'transparent', border: 'none', color: '#0284c7', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline' }}
                       >
                         Change Decision
                       </button>

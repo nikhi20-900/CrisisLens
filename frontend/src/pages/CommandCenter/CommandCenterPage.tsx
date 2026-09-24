@@ -18,8 +18,7 @@ export const CommandCenterPage: React.FC = () => {
   // Source State: Live API vs Demo Simulation
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [isLiveApi, setIsLiveApi] = useState<boolean>(false);
-  const [autoSync, setAutoSync] = useState<boolean>(true);
-  const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [autoSync] = useState<boolean>(true);
 
   // Demo simulation step (1 to 6)
   const [simulationStep, setSimulationStep] = useState<number>(4); // start at step 4 (Medical emergency) for rich initial view
@@ -110,7 +109,6 @@ export const CommandCenterPage: React.FC = () => {
         setSelectedIncidentId(state.incidents[0].incident_id);
       }
       setIncidentsLoading(false);
-      setLastSynced(new Date());
       return;
     }
 
@@ -125,7 +123,6 @@ export const CommandCenterPage: React.FC = () => {
       if (!selectedIncidentId && data.length > 0) {
         setSelectedIncidentId(data[0].incident_id);
       }
-      setLastSynced(new Date());
     } catch (err: unknown) {
       if (!isMountedRef.current) return;
       console.warn('Backend unavailable, engaging offline demo simulation mode', err);
@@ -348,14 +345,12 @@ export const CommandCenterPage: React.FC = () => {
   const latestSnapshot = timeline.length > 0 ? timeline[timeline.length - 1] : null;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary, #0a0d14)', color: 'var(--text-primary, #f8fafc)', display: 'flex', flexDirection: 'column' }}>
-      {/* Top Situation Room Header */}
+    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', display: 'flex', flexDirection: 'column' }}>
+      {/* Top Operations Header */}
       <Header
         isLiveApi={isLiveApi}
         onToggleSource={toggleSource}
-        autoSync={autoSync}
-        onToggleAutoSync={() => setAutoSync(!autoSync)}
-        lastSynced={lastSynced}
+        attentionCount={incidents.filter(i => i.severity === 'critical' || i.severity === 'high').length || 1}
         isDemoMode={isDemoMode}
         simulationStep={simulationStep}
         totalSteps={DEMO_TIMELINE_SNAPSHOTS.length}
@@ -368,10 +363,21 @@ export const CommandCenterPage: React.FC = () => {
         }
       />
 
-      {/* Main Dashboard Workspace */}
-      <main style={{ flex: 1, padding: '16px', maxWidth: '1700px', width: '100%', margin: '0 auto', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {/* ROW 1: Active Incidents (Left) + Tactical Map (Right) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 420px) 1fr', gap: '16px' }}>
+      {/* Main Command Center Workspace */}
+      <main
+        style={{
+          flex: 1,
+          padding: '16px 20px',
+          maxWidth: '1720px',
+          width: '100%',
+          margin: '0 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}
+      >
+        {/* ROW 1: Active Incidents Queue (Left) + Spatial Map (Right) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 380px) 1fr', gap: '16px', minHeight: '340px' }}>
           <div>
             <IncidentList
               incidents={incidents}
@@ -392,10 +398,10 @@ export const CommandCenterPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Selected Incident Section */}
+        {/* Selected Incident Situation Area */}
         {selectedIncident && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* ROW 2: Incident Overview Metrics Panel */}
+            {/* ROW 2: Selected Incident Header & NOW Briefing */}
             <IncidentDetailPanel
               incident={selectedIncident}
               loading={detailLoading}
@@ -403,9 +409,23 @@ export const CommandCenterPage: React.FC = () => {
               onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
             />
 
-            {/* ROW 3: Evidence (Left) + What Changed? & Priority (Right) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div>
+            {/* ROW 3: What Changed? */}
+            <WhatChangedBanner
+              snapshot={latestSnapshot}
+              previousSeverity={timeline.length > 1 ? timeline[timeline.length - 2].severity : undefined}
+            />
+
+            {/* ROW 4: Evidence & Timeline (Left) + Needs, Priority & Recommendations (Right) */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
+              {/* Column 1: Evidence & Evolution Timeline */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <SituationTimeline
+                  snapshots={timeline}
+                  loading={timelineLoading}
+                  error={timelineError}
+                  onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
+                />
+
                 <EvidencePanel
                   evidenceList={evidence}
                   evidenceLinks={selectedIncident.evidence_links}
@@ -415,47 +435,33 @@ export const CommandCenterPage: React.FC = () => {
                 />
               </div>
 
+              {/* Column 2: Current Needs, Priority Assessment & Action Recommendations */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <WhatChangedBanner
-                  snapshot={latestSnapshot}
-                  previousSeverity={timeline.length > 1 ? timeline[timeline.length - 2].severity : undefined}
-                />
+                <NeedsPanel needs={selectedIncident.current_needs} />
 
                 <PriorityDisplay
                   priorityScore={selectedIncident.priority_score}
                   priorityLevel={selectedIncident.priority_level}
                   reasons={selectedIncident.active_recommendation?.priority_rationale || latestSnapshot?.delta_summary || []}
                 />
+
+                <RecommendationPanel
+                  recommendations={recommendations}
+                  loading={recommendationsLoading}
+                  error={recommendationsError}
+                  onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
+                  onVerify={handleVerify}
+                  onReject={handleReject}
+                  onEdit={handleEdit}
+                />
               </div>
             </div>
-
-            {/* ROW 4: Chronological Incident Timeline */}
-            <SituationTimeline
-              snapshots={timeline}
-              loading={timelineLoading}
-              error={timelineError}
-              onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
-            />
-
-            {/* ROW 5: Current Needs Breakdown */}
-            <NeedsPanel needs={selectedIncident.current_needs} />
-
-            {/* ROW 6: AI Response Recommendations & Human Verification */}
-            <RecommendationPanel
-              recommendations={recommendations}
-              loading={recommendationsLoading}
-              error={recommendationsError}
-              onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
-              onVerify={handleVerify}
-              onReject={handleReject}
-              onEdit={handleEdit}
-            />
           </div>
         )}
 
         {!selectedIncident && !incidentsLoading && (
-          <div style={{ padding: '32px', textAlign: 'center', backgroundColor: 'var(--bg-card, #0f172a)', borderRadius: '10px', border: '1px solid var(--border-subtle, #1e293b)', color: 'var(--text-muted, #64748b)' }}>
-            Select an active incident from the list above to view full situation intelligence.
+          <div style={{ padding: '32px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+            Select an active incident from the queue above to inspect the situation.
           </div>
         )}
       </main>

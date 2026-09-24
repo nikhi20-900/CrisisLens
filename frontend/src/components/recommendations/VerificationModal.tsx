@@ -45,61 +45,61 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
   const getIcon = () => {
     switch (actionType) {
       case 'approve':
-        return <ShieldCheck size={20} color="#22c55e" />;
+        return <ShieldCheck size={18} color="#15803d" />;
       case 'reject':
-        return <XCircle size={20} color="#ef4444" />;
+        return <XCircle size={18} color="#b91c1c" />;
       case 'edit':
-        return <Edit3 size={20} color="#eab308" />;
+        return <Edit3 size={18} color="#b45309" />;
     }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={getTitle()}>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'flex-start',
-            gap: '12px',
-            padding: '12px',
-            borderRadius: '8px',
-            backgroundColor: 'var(--bg-elevated, #1e293b)',
-            border: '1px solid var(--border-subtle, #334155)',
+            gap: '10px',
+            padding: '10px 12px',
+            borderRadius: '4px',
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
           }}
         >
           <div style={{ marginTop: '2px' }}>{getIcon()}</div>
-          <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ fontWeight: 600, color: 'var(--text-primary, #f8fafc)' }}>
+          <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span style={{ fontWeight: 700, color: '#0f172a' }}>
               Action Plan #{recommendation.action_id}
-            </div>
-            <div style={{ color: 'var(--text-muted, #64748b)' }}>
-              Targeting: {recommendation.recommended_resources.map((r) => r.name).join(', ')}
-            </div>
+            </span>
+            <span style={{ color: '#475569' }}>
+              Allocated: {recommendation.recommended_resources.map((r) => r.name).join(', ')}
+            </span>
           </div>
         </div>
 
         {actionType === 'approve' && (
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary, #94a3b8)', margin: 0 }}>
+          <p style={{ fontSize: '12px', color: '#334155', margin: 0 }}>
             Confirming will mark this AI recommendation as human-verified. You may optionally attach operational verification notes below.
           </p>
         )}
 
         {actionType === 'reject' && (
-          <p style={{ fontSize: '12px', color: 'var(--severity-critical, #ef4444)', margin: 0 }}>
+          <p style={{ fontSize: '12px', color: '#b91c1c', margin: 0, fontWeight: 500 }}>
             Please record why this recommendation is being rejected (e.g. invalid location, road obstructed, team already assigned).
           </p>
         )}
 
         {actionType === 'edit' && (
-          <p style={{ fontSize: '12px', color: '#eab308', margin: 0 }}>
-            Specify modifications or operational orders before marking as verified.
+          <p style={{ fontSize: '12px', color: '#92400e', margin: 0 }}>
+            Specify modifications or specific operational orders before marking as verified.
           </p>
         )}
 
         <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary, #94a3b8)', marginBottom: '6px' }}>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
             Responder Notes / Verification Rationale
-            {actionType === 'reject' && <span style={{ color: '#ef4444', marginLeft: '4px' }}>*</span>}
+            {actionType === 'reject' && <span style={{ color: '#b91c1c', marginLeft: '4px' }}>*</span>}
           </label>
           <textarea
             required={actionType === 'reject'}
@@ -115,39 +115,39 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
               width: '100%',
               boxSizing: 'border-box',
               fontSize: '12px',
-              backgroundColor: 'var(--bg-elevated, #1e293b)',
-              border: '1px solid var(--border-subtle, #334155)',
-              borderRadius: '6px',
-              padding: '10px',
-              color: 'var(--text-primary, #f8fafc)',
+              backgroundColor: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              padding: '8px 10px',
+              color: '#0f172a',
               outline: 'none',
               resize: 'vertical',
             }}
           />
         </div>
 
-        {/* Important Disclaimer Required by Core Specification */}
+        {/* Audit Record Disclaimer */}
         <div
           style={{
             display: 'flex',
             alignItems: 'flex-start',
             gap: '8px',
             padding: '10px',
-            borderRadius: '6px',
-            backgroundColor: 'rgba(56, 189, 248, 0.08)',
-            border: '1px solid rgba(56, 189, 248, 0.25)',
+            borderRadius: '4px',
+            backgroundColor: '#f0f9ff',
+            border: '1px solid #bae6fd',
             fontSize: '11px',
-            color: 'var(--color-primary, #38bdf8)',
+            color: '#0369a1',
             lineHeight: 1.4,
           }}
         >
-          <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <AlertCircle size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
           <span>
-            <strong>Audit Record Notice:</strong> This action records your verification decision in CrisisLens. It does not dispatch emergency services.
+            <strong>Audit Record Notice:</strong> This action records your verification decision in CrisisLens audit logs. It does not trigger real-world emergency dispatch.
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px', borderTop: '1px solid var(--border-subtle, #334155)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
           <Button
             type="button"
             variant="secondary"

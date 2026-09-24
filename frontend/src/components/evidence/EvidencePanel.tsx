@@ -5,7 +5,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { ErrorAlert } from '@/components/common/ErrorAlert';
 import { EmptyState } from '@/components/common/EmptyState';
 import { EvidenceCard } from './EvidenceCard';
-import { FileText, Filter } from 'lucide-react';
+import { FileText, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface EvidencePanelProps {
   evidenceList?: Evidence[];
@@ -26,6 +26,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 }) => {
   const isBusy = loading || isLoading;
   const [filterSource, setFilterSource] = useState<string>('all');
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   // Merge direct evidence and evidence linked if available
   const items: { evidence: Evidence; similarityScore?: number }[] = [];
@@ -45,69 +46,92 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 
   const filteredItems = filterSource === 'all'
     ? items
-    : items.filter((item) => (item.evidence.raw_report?.source || '').toLowerCase() === filterSource.toLowerCase());
+    : items.filter((item) => (item.evidence.raw_report?.source || '').toLowerCase().includes(filterSource.toLowerCase()));
+
+  // Progressive disclosure: show 2 items when collapsed, all when expanded
+  const displayItems = isExpanded ? filteredItems : filteredItems.slice(0, 2);
 
   return (
     <Card
-      title="Incident Evidence"
-      icon={<FileText size={16} color="var(--color-primary, #38bdf8)" />}
+      title="Supporting Evidence & Field Reports"
+      icon={<FileText size={15} color="#0f172a" />}
       headerExtra={
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--bg-elevated, #1e293b)', color: 'var(--color-primary, #38bdf8)' }}>
+          <span style={{ fontSize: '11px', fontWeight: 600, padding: '1px 6px', borderRadius: '4px', backgroundColor: '#f1f5f9', color: '#334155' }}>
             {items.length} Reports
           </span>
           {items.length > 1 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Filter size={12} color="var(--text-muted, #64748b)" />
-              <select
-                aria-label="Filter evidence by source"
-                value={filterSource}
-                onChange={(e) => setFilterSource(e.target.value)}
-                style={{
-                  fontSize: '11px',
-                  backgroundColor: 'var(--bg-elevated, #1e293b)',
-                  border: '1px solid var(--border-subtle, #334155)',
-                  borderRadius: '4px',
-                  padding: '2px 6px',
-                  color: 'var(--text-primary, #f8fafc)',
-                  outline: 'none',
-                }}
-              >
-                <option value="all">All Sources</option>
-                <option value="citizen">Citizen</option>
-                <option value="responder">Responder</option>
-                <option value="emergency_call">Emergency Call</option>
-                <option value="social">Social Media</option>
-                <option value="sensor">IoT Sensor</option>
-              </select>
-            </div>
+            <select
+              aria-label="Filter evidence by source"
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+              style={{
+                fontSize: '11px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: '4px',
+                padding: '2px 6px',
+                color: '#1e293b',
+                outline: 'none',
+              }}
+            >
+              <option value="all">All Sources</option>
+              <option value="citizen">Citizen</option>
+              <option value="responder">Responder</option>
+              <option value="emergency">Emergency Calls</option>
+            </select>
           )}
         </div>
       }
     >
       {isBusy ? (
-        <Spinner label="Loading incident evidence..." />
+        <Spinner message="Loading incident evidence..." />
       ) : error ? (
         <ErrorAlert message={error} onRetry={onRetry} />
       ) : items.length === 0 ? (
         <EmptyState
-          icon={<FileText size={28} color="var(--text-muted, #64748b)" />}
           title="No Evidence Linked"
-          message="No multimodal evidence reports have been fused into this incident yet."
+          message="No multimodal evidence reports have been linked to this incident yet."
         />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '460px', overflowY: 'auto', paddingRight: '4px' }}>
-          {filteredItems.map(({ evidence, similarityScore }) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {displayItems.map(({ evidence, similarityScore }) => (
             <EvidenceCard
               key={evidence.evidence_id}
               evidence={evidence}
               similarityScore={similarityScore}
             />
           ))}
-          {filteredItems.length === 0 && (
-            <p style={{ fontSize: '12px', color: 'var(--text-muted, #64748b)', textAlign: 'center', padding: '16px' }}>
-              No evidence matching selected filter "{filterSource}".
-            </p>
+
+          {filteredItems.length > 2 && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                backgroundColor: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                color: '#0284c7',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginTop: '4px',
+              }}
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp size={14} /> Show fewer reports
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={14} /> View all {filteredItems.length} evidence sources
+                </>
+              )}
+            </button>
           )}
         </div>
       )}

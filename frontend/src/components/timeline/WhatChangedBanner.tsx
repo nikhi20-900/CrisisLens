@@ -1,7 +1,7 @@
-import React from "react";
-import type { IncidentSnapshot, SeverityLevel } from "@/types/domain";
-import { formatTime } from "@/lib";
-import { Zap, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
+import React from 'react';
+import type { IncidentSnapshot, SeverityLevel } from '@/types/domain';
+import { formatTime } from '@/lib/formatters';
+import { Clock, ArrowRight } from 'lucide-react';
 
 interface WhatChangedBannerProps {
   snapshot?: IncidentSnapshot | null;
@@ -14,8 +14,17 @@ export const WhatChangedBanner: React.FC<WhatChangedBannerProps> = ({
 }) => {
   if (!snapshot) {
     return (
-      <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 text-xs text-slate-500">
-        Waiting for situation evolution snapshots...
+      <div
+        style={{
+          padding: '14px 18px',
+          borderRadius: '6px',
+          backgroundColor: '#ffffff',
+          border: '1px solid #e2e8f0',
+          fontSize: '12px',
+          color: '#64748b',
+        }}
+      >
+        Waiting for initial situation evolution snapshot...
       </div>
     );
   }
@@ -25,69 +34,89 @@ export const WhatChangedBanner: React.FC<WhatChangedBannerProps> = ({
     previousSeverity && previousSeverity !== snapshot.severity;
 
   return (
-    <div className="p-4 rounded-xl border border-cyan-500/40 bg-gradient-to-r from-cyan-950/40 via-slate-900/80 to-slate-950 shadow-lg shadow-cyan-950/20">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2">
-          <div className="p-1 rounded bg-cyan-500/20 text-cyan-400">
-            <Zap className="w-4 h-4" />
-          </div>
-          <span className="text-xs font-black tracking-wider uppercase text-cyan-400">
-            WHAT CHANGED? (Situation Evolution)
-          </span>
+    <div
+      style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '6px',
+        border: '1px solid #e2e8f0',
+        padding: '16px',
+        boxShadow: 'var(--shadow-card, 0 1px 3px 0 rgba(0,0,0,0.06))',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#0f172a' }}>
+            What Changed? (Situation Evolution)
+          </h3>
         </div>
-        <span className="text-[11px] font-mono text-slate-400">
-          Snapshot {snapshot.snapshot_id} &bull; {formatTime(snapshot.timestamp)}
+
+        <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Clock size={12} />
+          Snapshot {snapshot.snapshot_id} • {formatTime(snapshot.timestamp)}
         </span>
       </div>
 
       {/* Snapshot summary */}
-      <p className="text-xs text-slate-200 mb-3 font-medium">
+      <p style={{ fontSize: '13px', color: '#334155', margin: 0, fontWeight: 500, lineHeight: 1.4 }}>
         {snapshot.summary}
       </p>
 
-      {/* Delta Badges */}
-      <div className="flex flex-wrap gap-2">
+      {/* Delta Badges / Change list */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', paddingTop: '4px' }}>
         {isSeverityEscalated && (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-red-950/80 border border-red-700 text-red-300">
-            {snapshot.severity === "critical" || snapshot.severity === "high" ? (
-              <TrendingUp className="w-3.5 h-3.5 text-red-400" />
-            ) : (
-              <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
-            )}
-            Severity changed: {previousSeverity?.toUpperCase()} &rarr; {snapshot.severity.toUpperCase()}
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '3px 8px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: 600,
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              color: '#991b1b',
+            }}
+          >
+            Severity changed: {previousSeverity?.toUpperCase()} <ArrowRight size={11} /> {snapshot.severity.toUpperCase()}
           </span>
         )}
 
         {deltas.length > 0 ? (
           deltas.map((delta, idx) => {
             const isCritical =
-              delta.toLowerCase().includes("critical") ||
-              delta.toLowerCase().includes("medical") ||
-              delta.toLowerCase().includes("trapped");
-            const isBlocked = delta.toLowerCase().includes("blocked");
+              delta.toLowerCase().includes('critical') ||
+              delta.toLowerCase().includes('medical') ||
+              delta.toLowerCase().includes('trapped');
+            const isBlocked = delta.toLowerCase().includes('blocked');
 
             return (
               <span
                 key={idx}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium border ${
-                  isCritical
-                    ? "bg-red-950/70 border-red-800 text-red-300"
-                    : isBlocked
-                    ? "bg-amber-950/70 border-amber-800 text-amber-300"
-                    : "bg-slate-900 border-slate-700 text-slate-200"
-                }`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: isCritical ? 600 : 500,
+                  backgroundColor: isCritical ? '#fef2f2' : isBlocked ? '#fffbeb' : '#f1f5f9',
+                  border: isCritical ? '1px solid #fecaca' : isBlocked ? '1px solid #fde68a' : '1px solid #cbd5e1',
+                  color: isCritical ? '#991b1b' : isBlocked ? '#92400e' : '#1e293b',
+                }}
               >
-                {isCritical ? (
-                  <AlertTriangle className="w-3 h-3 text-red-400" />
-                ) : (
-                  <span className="text-cyan-400 font-bold">&bull;</span>
-                )}
+                <span>•</span>
                 <span>{delta}</span>
               </span>
             );
           })
         ) : (
-          <span className="text-xs text-slate-400 italic">
+          <span style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
             No delta changes recorded in this snapshot.
           </span>
         )}

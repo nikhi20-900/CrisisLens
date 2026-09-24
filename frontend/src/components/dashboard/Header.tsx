@@ -1,20 +1,14 @@
-import React from "react";
+import React from 'react';
 import {
-  ShieldAlert,
-  Activity,
-  Pause,
   RotateCcw,
   FastForward,
   Server,
-  Zap,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface HeaderProps {
   isLiveApi: boolean;
   onToggleSource: () => void;
-  autoSync: boolean;
-  onToggleAutoSync: () => void;
-  lastSynced: Date | null;
+  attentionCount?: number;
   // Demo simulation controls
   isDemoMode: boolean;
   simulationStep: number;
@@ -27,9 +21,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   isLiveApi,
   onToggleSource,
-  autoSync,
-  onToggleAutoSync,
-  lastSynced,
+  attentionCount = 1,
   isDemoMode,
   simulationStep,
   totalSteps,
@@ -38,56 +30,137 @@ export const Header: React.FC<HeaderProps> = ({
   nextStepLabel,
 }) => {
   return (
-    <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-30 px-4 py-2.5">
-      <div className="max-w-[1700px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Brand & Mission Statement */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-red-950/80 border border-red-700/80 text-red-400 flex items-center justify-center shadow-lg shadow-red-950/40">
-            <ShieldAlert className="w-5 h-5 text-red-500 animate-pulse" />
+    <header
+      style={{
+        backgroundColor: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
+        padding: '10px 20px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: '1720px',
+          margin: '0 auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+        }}
+      >
+        {/* Brand & Mission */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <span
+              style={{
+                fontSize: '16px',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                color: '#0f172a',
+              }}
+            >
+              CRISISLENS
+            </span>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#64748b',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              Operations Center
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-black tracking-wider uppercase text-slate-100 flex items-center gap-1.5">
-                <span>CRISISLENS</span>
-                <span className="text-cyan-400 font-light">AI</span>
-                <span className="text-slate-500 font-normal">|</span>
-                <span className="text-xs font-mono font-medium text-slate-300">COMMAND CENTER</span>
-              </h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase bg-red-950 text-red-400 border border-red-800 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
-                LIVE
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">
-              Multimodal Evidence Analysis &bull; Incident Fusion &bull; Explainable Response Verification
-            </p>
+
+          <div style={{ height: '16px', width: '1px', backgroundColor: '#e2e8f0' }} />
+
+          {/* Global Attention Indicator */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '3px 10px',
+              borderRadius: '4px',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              color: '#991b1b',
+              fontSize: '12px',
+              fontWeight: 600,
+            }}
+          >
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                backgroundColor: '#dc2626',
+              }}
+            />
+            <span>LIVE — {attentionCount} {attentionCount === 1 ? 'incident requires' : 'incidents require'} attention</span>
           </div>
         </div>
 
-        {/* Tactical Controls & Status */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        {/* Operational Controls & Mode */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* Simulation Stepper (When in Demo Mode) */}
           {isDemoMode && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-950/30 border border-amber-800/60 text-amber-300">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-mono text-[11px]">
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '3px 8px',
+                borderRadius: '4px',
+                backgroundColor: '#fffbeb',
+                border: '1px solid #fde68a',
+                color: '#92400e',
+                fontSize: '12px',
+              }}
+            >
+              <span style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
                 Demo Step {simulationStep}/{totalSteps}
               </span>
               <button
                 onClick={onAdvanceSimulation}
                 disabled={simulationStep >= totalSteps}
-                className="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 disabled:opacity-40 text-amber-200 text-[10px] font-semibold border border-amber-500/40 flex items-center gap-1"
-                title={nextStepLabel || "Advance to next disaster snapshot"}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '2px 8px',
+                  borderRadius: '3px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: simulationStep >= totalSteps ? 'not-allowed' : 'pointer',
+                  opacity: simulationStep >= totalSteps ? 0.5 : 1,
+                }}
+                title={nextStepLabel || 'Advance to next disaster snapshot'}
               >
-                <FastForward className="w-3 h-3" />
-                <span>Next</span>
+                <FastForward size={12} />
+                <span>Advance</span>
               </button>
               <button
                 onClick={onResetSimulation}
-                className="p-1 rounded hover:bg-amber-500/20 text-amber-400 text-[10px]"
-                title="Reset simulation to initial flood report (10:02)"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '2px 4px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#64748b',
+                  cursor: 'pointer',
+                }}
+                title="Reset simulation to initial flood report"
               >
-                <RotateCcw className="w-3 h-3" />
+                <RotateCcw size={12} />
               </button>
             </div>
           )}
@@ -95,36 +168,23 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Source Toggle: Backend vs Demo */}
           <button
             onClick={onToggleSource}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-mono text-[11px] transition-all ${
-              isLiveApi
-                ? "bg-emerald-950/40 border-emerald-700/70 text-emerald-300 hover:bg-emerald-900/40"
-                : "bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800"
-            }`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '4px',
+              border: '1px solid',
+              borderColor: isLiveApi ? '#86efac' : '#cbd5e1',
+              backgroundColor: isLiveApi ? '#f0fdf4' : '#ffffff',
+              color: isLiveApi ? '#166534' : '#475569',
+              fontSize: '12px',
+              fontWeight: 500,
+            }}
           >
-            <Server className={`w-3.5 h-3.5 ${isLiveApi ? "text-emerald-400" : "text-slate-400"}`} />
-            <span>{isLiveApi ? "LIVE API (Port 8000)" : "OFFLINE DEMO"}</span>
+            <Server size={13} color={isLiveApi ? '#16a34a' : '#64748b'} />
+            <span>{isLiveApi ? 'Connected (Live API)' : 'Offline Demo Mode'}</span>
           </button>
-
-          {/* Auto-Sync Toggle */}
-          <button
-            onClick={onToggleAutoSync}
-            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border font-mono text-[11px] transition-all ${
-              autoSync
-                ? "bg-cyan-950/40 border-cyan-800 text-cyan-300"
-                : "bg-slate-900 border-slate-800 text-slate-500"
-            }`}
-            title={autoSync ? "Pause live auto-sync" : "Resume live auto-sync (3s)"}
-          >
-            {autoSync ? <Activity className="w-3 h-3 animate-spin text-cyan-400" /> : <Pause className="w-3 h-3" />}
-            <span className="hidden sm:inline">{autoSync ? "Auto-Sync 3s" : "Paused"}</span>
-          </button>
-
-          {/* Last Sync Timestamp */}
-          {lastSynced && (
-            <span className="text-[10px] font-mono text-slate-500 hidden lg:inline">
-              Updated {lastSynced.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </span>
-          )}
         </div>
       </div>
     </header>

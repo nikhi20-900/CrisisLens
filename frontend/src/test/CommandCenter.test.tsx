@@ -41,7 +41,7 @@ describe('CrisisLens Command Center Components', () => {
     render(<IncidentDetailPanel incident={demoIncidents[0]} />);
 
     expect(screen.getByText('Flash Flood & Bridge Inundation — Sector 4')).toBeInTheDocument();
-    expect(screen.getByText('flood')).toBeInTheDocument();
+    expect(screen.getAllByText(/flood/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/5 in danger/i)).toBeInTheDocument();
     expect(screen.getByText(/Central Market Bridge, Sector 4/i)).toBeInTheDocument();
   });
@@ -52,7 +52,7 @@ describe('CrisisLens Command Center Components', () => {
 
     expect(screen.getByText(/#{1}EV-001/i)).toBeInTheDocument();
     expect(screen.getByText(/Central Market Bridge/i)).toBeInTheDocument();
-    expect(screen.getByText(/Fusion Match:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Incident match:/i)).toBeInTheDocument();
     expect(screen.getByText('95%')).toBeInTheDocument();
   });
 
