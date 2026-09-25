@@ -4,6 +4,7 @@ import { IncidentCard } from '@/components/incidents/IncidentCard';
 import { IncidentDetailPanel } from '@/components/incidents/IncidentDetailPanel';
 import { NeedsPanel } from '@/components/incidents/NeedsPanel';
 import { PriorityDisplay } from '@/components/incidents/PriorityDisplay';
+import { ContradictionAlert } from '@/components/incidents/ContradictionAlert';
 import { EvidenceCard } from '@/components/evidence/EvidenceCard';
 import { EvidencePanel } from '@/components/evidence/EvidencePanel';
 import { WhatChangedBanner } from '@/components/timeline/WhatChangedBanner';
@@ -12,6 +13,7 @@ import { RecommendationPanel } from '@/components/recommendations/Recommendation
 import { AddReportModal } from '@/components/ingestion/AddReportModal';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorAlert } from '@/components/common/ErrorAlert';
+import { CommandCenterPage } from '@/pages/CommandCenter/CommandCenterPage';
 import {
   demoIncidents,
   demoSnapshots,
@@ -178,6 +180,33 @@ describe('CrisisLens Command Center Components', () => {
     expect(onAddEvidence).toHaveBeenCalledWith('INC-001');
   });
 
+  it('renders ContradictionAlert with calm review evidence action', () => {
+    const onReview = vi.fn();
+    render(
+      <ContradictionAlert
+        contradictions={[
+          {
+            contradiction_id: 'C-01',
+            field_name: 'access_status',
+            claim_a: { statement: 'One report says the road is accessible.' },
+            claim_b: { statement: 'A later video indicates vehicles cannot pass.' },
+            requires_human_resolution: true,
+            resolved: false,
+          },
+        ]}
+        onReviewEvidence={onReview}
+      />
+    );
+
+    expect(screen.getByText('CONFLICTING REPORTS')).toBeInTheDocument();
+    expect(screen.getByText(/road is accessible/i)).toBeInTheDocument();
+    expect(screen.getByText(/vehicles cannot pass/i)).toBeInTheDocument();
+
+    const reviewBtn = screen.getByRole('button', { name: /\[ REVIEW EVIDENCE \]/i });
+    fireEvent.click(reviewBtn);
+    expect(onReview).toHaveBeenCalled();
+  });
+
   it('renders AddReportModal, handles preset and confirms addition to incident', async () => {
     const onClose = vi.fn();
     const onSubmitted = vi.fn();
@@ -226,5 +255,216 @@ describe('CrisisLens Command Center Components', () => {
     fireEvent.click(viewIncidentBtn);
 
     expect(onSubmitted).toHaveBeenCalled();
+  });
+
+  it('allows uploading image and video files in AddReportModal with preview and controls', async () => {
+    const onClose = vi.fn();
+    const onSubmitted = vi.fn();
+
+    render(
+      <AddReportModal
+        isOpen={true}
+        onClose={onClose}
+        preselectedIncidentId="INC-001"
+        onReportSubmitted={onSubmitted}
+      />
+    );
+
+    // Verify information source select box exists with proper options
+    const select = screen.getByRole('combobox');
+    expect(select).toBeInTheDocument();
+    expect(screen.getByText('Citizen Report')).toBeInTheDocument();
+    expect(screen.getByText('First Responder')).toBeInTheDocument();
+
+    // Initially opens with prefilled demo photo
+    expect(screen.getByText(/Upload Picture/i)).toBeInTheDocument();
+    expect(screen.getByText('flood_bridge_road.jpg')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Change File/i })).toBeInTheDocument();
+
+    // Remove prefilled file to reveal empty dropzone
+    const initialRemoveBtn = screen.getByRole('button', { name: /Remove/i });
+    fireEvent.click(initialRemoveBtn);
+    expect(screen.getByText(/Choose Picture File/i)).toBeInTheDocument();
+
+    // Switch to video
+    const videoTab = screen.getByRole('button', { name: /^Video$/i });
+    fireEvent.click(videoTab);
+    expect(screen.getByText(/Upload Video/i)).toBeInTheDocument();
+    expect(screen.getByText(/Choose Video File/i)).toBeInTheDocument();
+
+    // Upload a new image file
+    const file = new File(['dummy-image-content'], 'test_flood.png', { type: 'image/png' });
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(fileInput).toBeTruthy();
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('test_flood.png')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Remove/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Change File/i })).toBeInTheDocument();
+    });
+
+    // Remove the uploaded file
+    const removeBtn = screen.getByRole('button', { name: /Remove/i });
+    fireEvent.click(removeBtn);
+
+    expect(screen.queryByText('test_flood.png')).not.toBeInTheDocument();
+    expect(screen.getByText(/Choose Picture File/i)).toBeInTheDocument();
+  });
+
+  it('renders CommandCenterPage with top bar, operational summary, and full 1-to-8 operational information hierarchy', async () => {
+    render(<CommandCenterPage />);
+
+    // Top Bar items
+    expect(screen.getByText('CRISISLENS')).toBeInTheDocument();
+    expect(screen.getByText('LIVE')).toBeInTheDocument();
+    expect(screen.getByText('INCIDENTS')).toBeInTheDocument();
+    expect(screen.getAllByText('MAP').length).toBeGreaterThan(0);
+    expect(screen.getByText(/\+ ADD REPORT/i)).toBeInTheDocument();
+
+    // Section 2: "Needs Attention" Operational Summary
+    expect(screen.getByText(/INCIDENT NEEDS ATTENTION|INCIDENTS NEED ATTENTION/i)).toBeInTheDocument();
+
+    // Wait for incident selection and 1-to-8 Hierarchy check
+    await waitFor(() => {
+      expect(screen.getByText('NOW')).toBeInTheDocument();
+    });
+
+    // 1. INCIDENT & 2. NOW
+    expect(screen.getByText('NOW')).toBeInTheDocument();
+
+    // 3. WHAT CHANGED
+    expect(screen.getByText('WHAT CHANGED?')).toBeInTheDocument();
+
+    // 4. EVIDENCE
+    expect(screen.getByText('EVIDENCE')).toBeInTheDocument();
+
+    // 5. CURRENT NEEDS
+    expect(screen.getByText('CURRENT NEEDS')).toBeInTheDocument();
+
+    // 6. PRIORITY
+    expect(screen.getByText('PRIORITY')).toBeInTheDocument();
+
+    // 7. RECOMMENDED RESPONSE
+    expect(screen.getByText('RECOMMENDED RESPONSE')).toBeInTheDocument();
+  });
+
+  it('correctly renders latest priority 88.5 and CRITICAL level, preventing stale 52.0 values', () => {
+    render(
+      <PriorityDisplay
+        score={88.5}
+        level="critical"
+        reasons={demoRecommendation.priority_rationale}
+      />
+    );
+
+    expect(screen.getByText('88.5')).toBeInTheDocument();
+    expect(screen.queryByText('52.0')).not.toBeInTheDocument();
+    expect(screen.getByText('critical')).toBeInTheDocument();
+    expect(screen.queryByText('medium')).not.toBeInTheDocument();
+  });
+
+  it('renders PriorityDisplay using structured PriorityResult contract when available', () => {
+    const priorityResult = {
+      score: 88.5,
+      priority_level: 'critical' as const,
+      reasons: [
+        '5 civilians directly trapped with water surrounding ground structure',
+        'Road access completely BLOCKED',
+        'Critical medical emergency reported: 68-year-old acute cardiac and asthma distress',
+      ],
+      confidence: 0.96,
+      situation_trend: 'escalating',
+      configuration_version: '1.0',
+    };
+
+    render(<PriorityDisplay priorityResult={priorityResult} />);
+
+    expect(screen.getByText('88.5')).toBeInTheDocument();
+    expect(screen.getByText('critical')).toBeInTheDocument();
+    expect(screen.getByText('96%')).toBeInTheDocument();
+    expect(screen.getByText(/68-year-old acute cardiac and asthma distress/i)).toBeInTheDocument();
+  });
+
+  it('renders Current Needs with RESCUE (critical), MEDICAL (critical), and WATER (medium)', () => {
+    render(<NeedsPanel needs={demoIncidents[0].current_needs} />);
+
+    expect(screen.getByText('rescue')).toBeInTheDocument();
+    expect(screen.getByText('medical')).toBeInTheDocument();
+    expect(screen.getByText('water')).toBeInTheDocument();
+
+    const criticalBadges = screen.getAllByText('Critical');
+    expect(criticalBadges.length).toBeGreaterThanOrEqual(2); // Rescue and Medical are Critical
+  });
+
+  it('ensures recommendation language uses "Recommend deploying" and never claims dispatch before verification', () => {
+    render(
+      <RecommendationPanel
+        recommendations={[demoRecommendation]}
+        onVerify={vi.fn()}
+        onReject={vi.fn()}
+        onEdit={vi.fn()}
+      />
+    );
+
+    // Verify status is PENDING VERIFICATION
+    expect(screen.getByText('PENDING VERIFICATION')).toBeInTheDocument();
+
+    // Verify rationale does NOT claim "Dispatched"
+    expect(screen.queryByText(/Dispatched Water Rescue Boat/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Recommend deploying Water Rescue Boat Unit Alpha/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Recommend deploying Rapid Medical Emergency Unit 03/i)).toBeInTheDocument();
+
+    // Verify resource details from data
+    expect(screen.getAllByText(/Water Rescue Boat Unit Alpha/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/capacity: 6/i)).toBeInTheDocument();
+    expect(screen.getByText(/ETA: 12 min/i)).toBeInTheDocument();
+
+    expect(screen.getAllByText(/Rapid Medical Emergency Unit 03/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/capacity: 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/ETA: 8 min/i)).toBeInTheDocument();
+  });
+
+  it('renders verified recommendation state without falsely claiming dispatch', () => {
+    const verifiedRec = {
+      ...demoRecommendation,
+      verification_status: 'approved' as const,
+      verified_by: 'COMMANDER-01',
+    };
+
+    render(
+      <RecommendationPanel
+        recommendations={[verifiedRec]}
+        onVerify={vi.fn()}
+        onReject={vi.fn()}
+        onEdit={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('RECOMMENDATION VERIFIED')).toBeInTheDocument();
+    expect(screen.getByText(/Recommendation verified by human responder \(COMMANDER-01\)/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Rescue team dispatched/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps secondary incident INC-002 isolated with its own priority and needs, not leaking INC-001 reasons', () => {
+    const inc2 = demoIncidents[1];
+    expect(inc2.incident_id).toBe('INC-002');
+    expect(inc2.priority_score).toBe(52.0);
+    expect(inc2.priority_level).toBe('medium');
+
+    render(
+      <PriorityDisplay
+        score={inc2.priority_score}
+        level={inc2.priority_level}
+        reasons={inc2.snapshots?.[0]?.delta_summary || []}
+      />
+    );
+
+    expect(screen.getByText('52.0')).toBeInTheDocument();
+    expect(screen.getByText('medium')).toBeInTheDocument();
+    expect(screen.getByText(/Initial overflow detected at West Industrial canal gate/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Severity escalated to CRITICAL/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Dynamic priority recalculated to 88.5/i)).not.toBeInTheDocument();
   });
 });

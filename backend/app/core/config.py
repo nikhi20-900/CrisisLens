@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -13,10 +13,11 @@ class Settings(BaseSettings):
     MOCK_AI_MODE: bool = True
     GEMINI_API_KEY: str = ""
 
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=(".env", "../.env"),
+        extra="ignore",
+    )
 
 
 settings = Settings()

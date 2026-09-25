@@ -45,7 +45,7 @@ export const demoSnapshots: IncidentSnapshot[] = [
     severity: 'medium',
     people_affected: 0,
     access_status: 'partially_blocked',
-    active_needs: [],
+    active_needs: ['water'],
     priority_score: 45.0,
     summary: 'Flash flood detected on 4th Main near Central Market Bridge. Water rising over curb.',
     delta_summary: [
@@ -61,7 +61,7 @@ export const demoSnapshots: IncidentSnapshot[] = [
     severity: 'high',
     people_affected: 5,
     access_status: 'partially_blocked',
-    active_needs: ['rescue'],
+    active_needs: ['rescue', 'water'],
     priority_score: 68.0,
     summary: '5 residents trapped inside bakery by rising water (1.2m deep). Immediate boat rescue requested.',
     delta_summary: [
@@ -78,7 +78,7 @@ export const demoSnapshots: IncidentSnapshot[] = [
     severity: 'high',
     people_affected: 5,
     access_status: 'blocked',
-    active_needs: ['rescue'],
+    active_needs: ['rescue', 'water'],
     priority_score: 75.0,
     summary: 'Police patrol reports east and west approach lanes submerged. Vehicles cannot pass.',
     delta_summary: [
@@ -94,7 +94,7 @@ export const demoSnapshots: IncidentSnapshot[] = [
     severity: 'critical',
     people_affected: 5,
     access_status: 'blocked',
-    active_needs: ['rescue', 'medical'],
+    active_needs: ['rescue', 'medical', 'water'],
     priority_score: 88.5,
     summary: 'Critical 911 update: 68-year-old resident suffering acute asthma & heart palpitations on bakery roof terrace.',
     delta_summary: [
@@ -111,7 +111,7 @@ export const demoSnapshots: IncidentSnapshot[] = [
     severity: 'critical',
     people_affected: 5,
     access_status: 'blocked',
-    active_needs: ['rescue', 'medical'],
+    active_needs: ['rescue', 'medical', 'water'],
     priority_score: 88.5,
     summary: 'Incident Commander confirmed AI recommendation: Water Rescue Boat Alpha & Paramedic Unit 03 deployed.',
     delta_summary: [
@@ -313,7 +313,7 @@ export const demoRecommendation: ActionPlan = {
     demoResources[1], // Rapid Medical Unit 03
   ],
   resource_rationale:
-    'Dispatched Water Rescue Boat Unit Alpha (capacity 6, ETA 12 min) to navigate 1.2m flood water and evacuate 5 roof-bound residents. Dispatched Rapid Medical Unit 03 (paramedics, ETA 8 min) to stage at northern elevated ramp with oxygen and cardiac stabilization equipment.',
+    'Recommend deploying Water Rescue Boat Unit Alpha (capacity 6, ETA 12 min) to navigate 1.2m flood water and evacuate 5 roof-bound residents. Recommend deploying Rapid Medical Emergency Unit 03 (paramedics, ETA 8 min) to stage at northern elevated ramp with oxygen and cardiac stabilization equipment.',
   verification_status: 'pending',
   verified_by: undefined,
   verified_at: undefined,
@@ -357,7 +357,7 @@ export const demoIncidents: Incident[] = [
       {
         need_id: 'ND-001',
         type: 'rescue',
-        urgency: 'high',
+        urgency: 'critical',
         confidence: 0.96,
         status: 'unmet',
         quantity: 5,
@@ -376,13 +376,13 @@ export const demoIncidents: Incident[] = [
       },
       {
         need_id: 'ND-003',
-        type: 'transport',
+        type: 'water',
         urgency: 'medium',
-        confidence: 0.85,
+        confidence: 0.88,
         status: 'unmet',
-        quantity: 5,
-        description: 'Secondary transit bus required once extracted to northern elevated ramp',
-        identified_at: '2026-09-25T10:14:15Z',
+        quantity: 1,
+        description: 'High-volume water drainage pumps required to clear bridge underpass inundation',
+        identified_at: '2026-09-25T10:02:15Z',
       },
     ],
     active_recommendation: demoRecommendation,
@@ -420,7 +420,24 @@ export const demoIncidents: Incident[] = [
         identified_at: '2026-09-25T10:15:00Z',
       },
     ],
-    snapshots: [],
+    snapshots: [
+      {
+        snapshot_id: 'SNAP-INC2-001',
+        incident_id: 'INC-002',
+        timestamp: '2026-09-25T10:15:00Z',
+        severity: 'medium',
+        people_affected: 0,
+        access_status: 'partially_blocked',
+        active_needs: ['water'],
+        priority_score: 52.0,
+        summary: 'Canal drainage overflow detected near West Industrial Buffer. Submersible pump requested.',
+        delta_summary: [
+          'Initial overflow detected at West Industrial canal gate',
+          'Access partially blocked on buffer service road',
+          'Drainage pump required to prevent warehouse flooding',
+        ],
+      },
+    ],
     contradictions: [],
     created_at: '2026-09-25T10:15:00Z',
     updated_at: '2026-09-25T10:15:00Z',

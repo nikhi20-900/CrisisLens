@@ -1,5 +1,7 @@
 from app.services.evidence import (
     EvidenceAnalysisInterface,
+    EvidenceAnalysisService,
+    DeterministicDemoAnalyzer,
     MockEvidenceAnalysisService,
     evidence_analyzer,
 )
@@ -16,6 +18,8 @@ from app.services.response import (
 
 __all__ = [
     "EvidenceAnalysisInterface",
+    "EvidenceAnalysisService",
+    "DeterministicDemoAnalyzer",
     "MockEvidenceAnalysisService",
     "evidence_analyzer",
     "IncidentFusionInterface",

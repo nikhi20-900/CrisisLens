@@ -13,6 +13,8 @@ import {
   AlertCircle,
   ArrowRight,
   X,
+  ChevronDown,
+  Trash2,
 } from 'lucide-react';
 
 export interface AddReportModalProps {
@@ -41,6 +43,13 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
   const [timestampStr, setTimestampStr] = useState<string>('');
   const [fileName, setFileName] = useState<string | null>(null);
 
+  // File Upload State
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [fileDataUrl, setFileDataUrl] = useState<string | null>(null);
+  const [fileSizeStr, setFileSizeStr] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+
   // Analysis simulation progress
   const [analysisStepIndex, setAnalysisStepIndex] = useState<number>(0);
   const [submissionResult, setSubmissionResult] = useState<ReportSubmissionResponse | null>(null);
@@ -55,6 +64,10 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
       setLocationStr(prefillLocation || 'Bridge Road, Sector 4');
       setSource('citizen');
       setFileName('flood_bridge_road.jpg');
+      setUploadedFile(null);
+      setFileDataUrl(null);
+      setFileSizeStr(null);
+      setIsDragging(false);
       setAnalysisStepIndex(0);
       setSubmissionResult(null);
       setErrorMsg(null);
@@ -70,6 +83,11 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
 
   // Preset demo helpers
   const applyPreset = (preset: 'preset_photo' | 'preset_trapped' | 'preset_video') => {
+    setUploadedFile(null);
+    setFileDataUrl(null);
+    setFileSizeStr(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
     if (preset === 'preset_photo') {
       setContentType('image');
       setText('Water overflowing onto Bridge Road. High current and water rising near shops.');
@@ -91,8 +109,78 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
     }
   };
 
+  const handleProcessFile = (file: File) => {
+    if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+
+    if (!isImage && !isVideo) {
+      setErrorMsg('Please select an image (JPG, PNG, WEBP, GIF) or video (MP4, MOV, WEBM) file.');
+      return;
+    }
+
+    setErrorMsg(null);
+    setUploadedFile(file);
+    setFileName(file.name);
+
+    // Format size
+    const sizeInMB = file.size / (1024 * 1024);
+    if (sizeInMB >= 1) {
+      setFileSizeStr(`${sizeInMB.toFixed(1)} MB`);
+    } else {
+      setFileSizeStr(`${Math.max(1, Math.round(file.size / 1024))} KB`);
+    }
+
+    if (isImage) {
+      setContentType('image');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFileDataUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else if (isVideo) {
+      setContentType('video');
+      if (file.size < 12 * 1024 * 1024) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setFileDataUrl(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setFileDataUrl(URL.createObjectURL(file));
+      }
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleProcessFile(file);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleProcessFile(file);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null);
+    setFileDataUrl(null);
+    setFileName(null);
+    setFileSizeStr(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleStartAnalysis = async () => {
-    if (!text.trim() && !fileName) {
+    if (!text.trim() && !fileName && !fileDataUrl) {
       setErrorMsg('Please provide a report description or select a file to ingest.');
       return;
     }
@@ -103,19 +191,19 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
 
     const generatedId = `R-${Date.now().toString().slice(-4)}`;
     const mediaItems = [];
-    if (contentType === 'image') {
+    if (contentType === 'image' && (fileDataUrl || fileName)) {
       mediaItems.push({
         media_id: `M-${Date.now().toString().slice(-3)}`,
-        media_type: 'image/jpeg',
-        url: fileName ? `/uploads/${fileName}` : '/images/flood1.jpg',
-        caption: text.slice(0, 40),
+        media_type: uploadedFile?.type || 'image/jpeg',
+        url: fileDataUrl || (fileName ? `/uploads/${fileName}` : '/images/flood1.jpg'),
+        caption: text.slice(0, 50) || fileName || 'Field flood report image',
       });
-    } else if (contentType === 'video') {
+    } else if (contentType === 'video' && (fileDataUrl || fileName)) {
       mediaItems.push({
         media_id: `M-${Date.now().toString().slice(-3)}`,
-        media_type: 'video/mp4',
-        url: fileName ? `/uploads/${fileName}` : '/videos/flood_blockage.mp4',
-        caption: text.slice(0, 40),
+        media_type: uploadedFile?.type || 'video/mp4',
+        url: fileDataUrl || (fileName ? `/uploads/${fileName}` : '/videos/flood_blockage.mp4'),
+        caption: text.slice(0, 50) || fileName || 'Field road blockage video',
       });
     }
 
@@ -442,34 +530,203 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
               {/* Upload Drop Zone (When image or video) */}
               {contentType !== 'text' && (
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                    Upload Media
-                  </label>
-                  <div
-                    style={{
-                      border: '2px dashed #cbd5e1',
-                      borderRadius: '6px',
-                      padding: '18px 16px',
-                      textAlign: 'center',
-                      backgroundColor: '#f8fafc',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <Upload size={22} color="#64748b" />
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
-                      {fileName ? (
-                        <span style={{ color: '#0369a1', fontFamily: 'var(--font-mono)' }}>{fileName}</span>
-                      ) : (
-                        `Drop ${contentType} file here, or click to browse`
-                      )}
-                    </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
+                      Upload {contentType === 'video' ? 'Video' : 'Picture'}
+                    </label>
                     <span style={{ fontSize: '11px', color: '#64748b' }}>
-                      Supports JPG, PNG, MP4, MOV (up to 50MB)
+                      Supports JPG, PNG, WEBP, MP4, MOV (max 50MB)
                     </span>
                   </div>
+
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={
+                      contentType === 'video'
+                        ? 'video/mp4,video/quicktime,video/webm,video/*'
+                        : 'image/jpeg,image/png,image/webp,image/gif,image/*'
+                    }
+                    onChange={handleFileInputChange}
+                    style={{ display: 'none' }}
+                  />
+
+                  {/* If user has selected a file or preset with preview */}
+                  {(fileDataUrl || (fileName && !uploadedFile)) ? (
+                    <div
+                      style={{
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '6px',
+                        padding: '12px',
+                        backgroundColor: '#f8fafc',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px',
+                      }}
+                    >
+                      {/* Image Preview */}
+                      {contentType === 'image' && fileDataUrl && (
+                        <div style={{ position: 'relative', borderRadius: '4px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#0f172a', maxHeight: '180px', display: 'flex', justifyContent: 'center' }}>
+                          <img
+                            src={fileDataUrl}
+                            alt="Uploaded preview"
+                            style={{
+                              maxHeight: '180px',
+                              maxWidth: '100%',
+                              objectFit: 'contain',
+                              display: 'block',
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Video Preview */}
+                      {contentType === 'video' && fileDataUrl && (
+                        <div style={{ position: 'relative', borderRadius: '4px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#000000', maxHeight: '200px' }}>
+                          <video
+                            src={fileDataUrl}
+                            controls
+                            style={{
+                              maxHeight: '200px',
+                              width: '100%',
+                              display: 'block',
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* File Details & Action Row */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '4px',
+                              backgroundColor: '#e0f2fe',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#0284c7',
+                            }}
+                          >
+                            {contentType === 'video' ? <Video size={16} /> : <Camera size={16} />}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', wordBreak: 'break-all' }}>
+                              {fileName || 'Attached media'}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>
+                              {fileSizeStr ? `${fileSizeStr} • ` : ''}
+                              {uploadedFile ? 'Ready to analyze' : 'Demo sample'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            style={{
+                              padding: '5px 10px',
+                              borderRadius: '4px',
+                              border: '1px solid #cbd5e1',
+                              backgroundColor: '#ffffff',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: '#0369a1',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <Upload size={12} />
+                            <span>Change File</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemoveFile}
+                            style={{
+                              padding: '5px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid #fecaca',
+                              backgroundColor: '#fef2f2',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <Trash2 size={12} />
+                            <span>Remove</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Dropzone when no file selected */
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                      }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={handleDrop}
+                      style={{
+                        border: isDragging ? '2px dashed #0284c7' : '2px dashed #cbd5e1',
+                        borderRadius: '6px',
+                        padding: '24px 16px',
+                        textAlign: 'center',
+                        backgroundColor: isDragging ? '#f0f9ff' : '#f8fafc',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          backgroundColor: isDragging ? '#e0f2fe' : '#f1f5f9',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Upload size={20} color={isDragging ? '#0284c7' : '#64748b'} />
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
+                        Click to browse or drop {contentType === 'video' ? 'video' : 'picture'} here
+                      </div>
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '5px 12px',
+                          borderRadius: '4px',
+                          backgroundColor: '#ffffff',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: '#0284c7',
+                          marginTop: '4px',
+                        }}
+                      >
+                        Choose {contentType === 'video' ? 'Video' : 'Picture'} File
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -504,8 +761,8 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
                     Location Landmark / Road
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <MapPin size={14} color="#0284c7" style={{ position: 'absolute', left: '10px', top: '10px' }} />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <MapPin size={14} color="#0284c7" style={{ position: 'absolute', left: '10px', pointerEvents: 'none' }} />
                     <input
                       type="text"
                       value={locationStr}
@@ -513,7 +770,8 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
                       placeholder="e.g. Bridge Road"
                       style={{
                         width: '100%',
-                        padding: '8px 10px 8px 30px',
+                        height: '36px',
+                        padding: '8px 10px 8px 32px',
                         borderRadius: '4px',
                         border: '1px solid #cbd5e1',
                         fontSize: '12px',
@@ -527,19 +785,25 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
                     Information Source
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <User size={14} color="#64748b" style={{ position: 'absolute', left: '10px', top: '10px' }} />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <User size={14} color="#64748b" style={{ position: 'absolute', left: '10px', pointerEvents: 'none', zIndex: 1 }} />
                     <select
                       value={source}
                       onChange={(e) => setSource(e.target.value)}
                       style={{
                         width: '100%',
-                        padding: '8px 10px 8px 30px',
+                        height: '36px',
+                        padding: '8px 28px 8px 32px',
                         borderRadius: '4px',
                         border: '1px solid #cbd5e1',
                         fontSize: '12px',
                         backgroundColor: '#ffffff',
+                        color: '#0f172a',
                         boxSizing: 'border-box',
+                        appearance: 'none',
+                        WebkitAppearance: 'none',
+                        MozAppearance: 'none',
+                        cursor: 'pointer',
                       }}
                     >
                       <option value="citizen">Citizen Report</option>
@@ -547,6 +811,7 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
                       <option value="official">Official Authority</option>
                       <option value="other">Social / Media</option>
                     </select>
+                    <ChevronDown size={14} color="#64748b" style={{ position: 'absolute', right: '10px', pointerEvents: 'none' }} />
                   </div>
                 </div>
 
@@ -554,15 +819,16 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>
                     Timestamp
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <Clock size={14} color="#64748b" style={{ position: 'absolute', left: '10px', top: '10px' }} />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <Clock size={14} color="#64748b" style={{ position: 'absolute', left: '10px', pointerEvents: 'none' }} />
                     <input
                       type="text"
                       value={timestampStr}
                       onChange={(e) => setTimestampStr(e.target.value)}
                       style={{
                         width: '100%',
-                        padding: '8px 10px 8px 30px',
+                        height: '36px',
+                        padding: '8px 10px 8px 32px',
                         borderRadius: '4px',
                         border: '1px solid #cbd5e1',
                         fontSize: '12px',
@@ -578,66 +844,75 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
           {/* STEP 2: CLEAR PROCESSING / ANALYSIS CHECKLIST */}
           {step === 'analyzing' && (
             <div style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Multimodal Evidence Pipeline
+              <div style={{ textAlign: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Processing Evidence
                 </span>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '4px 0' }}>
-                  Analyzing New Evidence
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', margin: '4px 0 0 0' }}>
+                  Analyzing Evidence
                 </h3>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-                  Extracting hazards, entities, and spatial coordinates from raw input.
-                </p>
               </div>
 
               <div
                 style={{
                   backgroundColor: '#f8fafc',
                   border: '1px solid #e2e8f0',
-                  borderRadius: '6px',
-                  padding: '16px 20px',
+                  borderRadius: '4px',
+                  padding: '18px 24px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '14px',
+                  gap: '6px',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <CheckCircle2 size={18} color="#16a34a" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <CheckCircle2 size={16} color="#16a34a" />
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#166534' }}>
-                    Evidence received & logged
+                    Evidence received
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ paddingLeft: '7px' }}>
+                  <span style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: 1 }}>↓</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {analysisStepIndex >= 1 ? (
-                    <CheckCircle2 size={18} color="#16a34a" />
+                    <CheckCircle2 size={16} color="#16a34a" />
                   ) : (
-                    <span style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #0284c7', display: 'inline-block' }} />
+                    <span style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #0284c7', display: 'inline-block' }} />
                   )}
                   <span style={{ fontSize: '13px', fontWeight: 600, color: analysisStepIndex >= 1 ? '#0f172a' : '#64748b' }}>
-                    Extracting disaster features & relief needs...
+                    Analyzing
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ paddingLeft: '7px' }}>
+                  <span style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: 1 }}>↓</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {analysisStepIndex >= 2 ? (
-                    <CheckCircle2 size={18} color="#16a34a" />
+                    <CheckCircle2 size={16} color="#16a34a" />
                   ) : (
-                    <span style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #cbd5e1', display: 'inline-block' }} />
+                    <span style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #cbd5e1', display: 'inline-block' }} />
                   )}
                   <span style={{ fontSize: '13px', fontWeight: 600, color: analysisStepIndex >= 2 ? '#0f172a' : '#64748b' }}>
-                    Checking spatial coordinates & access status...
+                    Related incident found
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ paddingLeft: '7px' }}>
+                  <span style={{ color: '#cbd5e1', fontSize: '11px', lineHeight: 1 }}>↓</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {analysisStepIndex >= 3 ? (
-                    <CheckCircle2 size={18} color="#16a34a" />
+                    <CheckCircle2 size={16} color="#16a34a" />
                   ) : (
-                    <span style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid #cbd5e1', display: 'inline-block' }} />
+                    <span style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid #cbd5e1', display: 'inline-block' }} />
                   )}
                   <span style={{ fontSize: '13px', fontWeight: 600, color: analysisStepIndex >= 3 ? '#0f172a' : '#64748b' }}>
-                    Comparing with active evolving incidents...
+                    Added to incident
                   </span>
                 </div>
               </div>
@@ -694,6 +969,35 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
                     </strong>
                   </div>
                 )}
+
+                {/* Attached Media Preview */}
+                {submissionResult.evidence.raw_report?.media?.[0]?.url && (
+                  <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '6px' }}>
+                      Attached Media Evidence:
+                    </div>
+                    {submissionResult.evidence.raw_report.media[0].media_type?.includes('video') ? (
+                      <div style={{ borderRadius: '4px', overflow: 'hidden', backgroundColor: '#000000', maxHeight: '140px' }}>
+                        <video
+                          src={submissionResult.evidence.raw_report.media[0].url}
+                          controls
+                          style={{ width: '100%', maxHeight: '140px', display: 'block' }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e2e8f0', maxHeight: '140px', display: 'flex', justifyContent: 'center', backgroundColor: '#f1f5f9' }}>
+                        <img
+                          src={submissionResult.evidence.raw_report.media[0].url}
+                          alt="Analyzed media evidence"
+                          style={{ maxHeight: '140px', maxWidth: '100%', objectFit: 'contain', display: 'block' }}
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Related Incident Match Card */}
@@ -728,26 +1032,39 @@ export const AddReportModal: React.FC<AddReportModalProps> = ({
                   <span>✓ Corroborated flood context & blocked access</span>
                 </div>
 
-                {/* Visual Architecture Representation (Requirement 6) */}
+                {/* Core CrisisLens Transformation (Section 14) */}
                 <div
                   style={{
                     backgroundColor: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '4px',
-                    padding: '8px 12px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    padding: '12px 14px',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '11px',
-                    color: '#475569',
-                    fontFamily: 'var(--font-mono)',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    fontSize: '12px',
                   }}
                 >
-                  <span>📷 Photo + 📝 Citizen report + 🎥 Video</span>
-                  <ArrowRight size={13} color="#0284c7" />
-                  <span style={{ fontWeight: 700, color: '#0f172a' }}>INC-001 Flooding</span>
-                  <ArrowRight size={13} color="#0284c7" />
-                  <span style={{ fontWeight: 700, color: '#16a34a' }}>One Evolving Incident</span>
+                  <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b' }}>
+                    CrisisLens Intelligence Transformation
+                  </span>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 700, color: '#0f172a' }}>NEW REPORT:</span>
+                    <span style={{ color: '#334155' }}>
+                      {contentType === 'image' ? '📷 Photo' : contentType === 'video' ? '🎥 Video' : '📝 Text'} • "{text.slice(0, 50)}..."
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0284c7', fontWeight: 700, paddingLeft: '8px' }}>
+                    <ArrowRight size={13} />
+                    <span>MATCHED TO: {submissionResult.incident_id} — Flooding — Bridge Road</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#166534', fontWeight: 700, paddingLeft: '8px' }}>
+                    <ArrowRight size={13} />
+                    <span>EVOLVING INCIDENT: 5 sources now support this incident</span>
+                  </div>
                 </div>
               </div>
             </div>

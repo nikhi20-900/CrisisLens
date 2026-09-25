@@ -33,10 +33,9 @@ export const IncidentList: React.FC<IncidentListProps> = ({
         flexDirection: 'column',
         height: '100%',
         backgroundColor: '#ffffff',
-        borderRadius: '6px',
+        borderRadius: '4px',
         border: '1px solid #e2e8f0',
-        padding: '14px',
-        boxShadow: 'var(--shadow-card, 0 1px 3px 0 rgba(0,0,0,0.06))',
+        padding: '12px',
       }}
     >
       {/* Header */}
@@ -45,22 +44,31 @@ export const IncidentList: React.FC<IncidentListProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '12px',
+          marginBottom: '8px',
           paddingBottom: '8px',
           borderBottom: '1px solid #f1f5f9',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <h3 style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#0f172a', fontWeight: 700 }}>
-            Active Incident Queue
+          <h3
+            style={{
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: '#475569',
+              fontWeight: 700,
+              margin: 0,
+            }}
+          >
+            Active Incidents
           </h3>
           <span
             style={{
-              fontSize: '11px',
+              fontSize: '10px',
               fontFamily: 'var(--font-mono)',
-              fontWeight: 600,
-              padding: '1px 6px',
-              borderRadius: '4px',
+              fontWeight: 700,
+              padding: '1px 5px',
+              borderRadius: '2px',
               backgroundColor: '#f1f5f9',
               color: '#334155',
             }}
@@ -70,8 +78,8 @@ export const IncidentList: React.FC<IncidentListProps> = ({
         </div>
 
         {isBusy && (
-          <span style={{ fontSize: '11px', color: '#64748b' }}>
-            Syncing...
+          <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+            Updating...
           </span>
         )}
       </div>
@@ -82,9 +90,9 @@ export const IncidentList: React.FC<IncidentListProps> = ({
       ) : isBusy && incidents.length === 0 ? (
         <Spinner message="Loading active incidents..." />
       ) : incidents.length === 0 ? (
-        <EmptyState message="No active incidents require attention." />
+        <EmptyState message="No active incidents reported." />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1, paddingRight: '2px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto', flex: 1 }}>
           {incidents.map((incident) => (
             <IncidentCard
               key={incident.incident_id}

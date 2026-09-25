@@ -1,6 +1,5 @@
 import React from 'react';
 import type { IncidentSnapshot } from '@/types/domain';
-import { Badge } from '@/components/common/Badge';
 import { Spinner } from '@/components/common/Spinner';
 import { ErrorAlert } from '@/components/common/ErrorAlert';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -25,15 +24,14 @@ export const SituationTimeline: React.FC<SituationTimelineProps> = ({
         backgroundColor: '#ffffff',
         borderRadius: '6px',
         border: '1px solid #e2e8f0',
-        padding: '16px',
-        boxShadow: 'var(--shadow-card, 0 1px 3px 0 rgba(0,0,0,0.06))',
+        padding: '16px 18px',
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
-        <h3 style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#0f172a', fontWeight: 700 }}>
+        <h3 style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#0f172a', fontWeight: 800, margin: 0 }}>
           Incident Evolution Timeline
         </h3>
         <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#64748b' }}>
@@ -51,7 +49,7 @@ export const SituationTimeline: React.FC<SituationTimelineProps> = ({
           message="Situation evolution snapshots have not been recorded yet."
         />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {snapshots.map((snap, idx) => {
             const isLatest = idx === snapshots.length - 1;
 
@@ -59,43 +57,33 @@ export const SituationTimeline: React.FC<SituationTimelineProps> = ({
               <div
                 key={snap.snapshot_id}
                 style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
+                  display: 'grid',
+                  gridTemplateColumns: '70px 1fr',
                   gap: '12px',
-                  padding: '10px 12px',
-                  borderRadius: '4px',
-                  backgroundColor: isLatest ? '#f8fafc' : '#ffffff',
-                  border: isLatest ? '1px solid #cbd5e1' : '1px solid #f1f5f9',
+                  alignItems: 'baseline',
+                  padding: '6px 0',
+                  borderBottom: idx < snapshots.length - 1 ? '1px solid #f1f5f9' : 'none',
                 }}
               >
-                {/* Time & Snapshot ID */}
-                <div style={{ minWidth: '70px', display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, color: isLatest ? '#0f172a' : '#64748b' }}>
                     {formatTime(snap.timestamp)}
                   </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#64748b' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: '#94a3b8' }}>
                     #{snap.snapshot_id}
                   </span>
                 </div>
 
-                {/* Summary & Badges */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Badge variant={snap.severity} size="sm">
-                      {snap.severity}
-                    </Badge>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#0f172a' }}>
-                      {snap.summary}
-                    </span>
-                  </div>
-
-                  {/* Impact metrics & deltas */}
-                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', fontSize: '11px', color: '#64748b' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: isLatest ? 600 : 500, color: isLatest ? '#0f172a' : '#334155' }}>
+                    {snap.summary}
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', color: '#64748b' }}>
+                    <span>Severity: <strong style={{ textTransform: 'uppercase' }}>{snap.severity}</strong></span>
+                    <span>•</span>
                     <span>Affected: <strong>{snap.people_affected}</strong></span>
                     <span>•</span>
-                    <span style={{ textTransform: 'capitalize' }}>Road: <strong>{snap.access_status}</strong></span>
-                    <span>•</span>
-                    <span>Priority: <strong>{snap.priority_score.toFixed(1)}</strong></span>
+                    <span>Road: <strong>{snap.access_status}</strong></span>
                   </div>
                 </div>
               </div>

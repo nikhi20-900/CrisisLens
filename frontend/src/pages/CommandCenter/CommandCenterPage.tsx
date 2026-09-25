@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { Incident, Evidence, IncidentSnapshot, ActionPlan, NeedType, ReportSubmissionResponse } from '@/types/domain';
+import type { Incident, Evidence, IncidentSnapshot, ActionPlan, ReportSubmissionResponse } from '@/types/domain';
 import { api } from '@/services/api';
 import {
   DEMO_INCIDENTS,
@@ -8,9 +8,15 @@ import {
   DEMO_RECOMMENDATIONS,
 } from '@/features/demo/demoData';
 import { Header } from '@/components/dashboard/Header';
-import { IncidentList, IncidentDetailPanel, NeedsPanel, PriorityDisplay } from '@/components/incidents';
+import {
+  IncidentList,
+  IncidentDetailPanel,
+  NeedsPanel,
+  PriorityDisplay,
+  ContradictionAlert,
+} from '@/components/incidents';
 import { EvidencePanel } from '@/components/evidence';
-import { WhatChangedBanner, SituationTimeline } from '@/components/timeline';
+import { WhatChangedBanner } from '@/components/timeline';
 import { RecommendationPanel } from '@/components/recommendations';
 import { IncidentMap } from '@/components/map';
 import { AddReportModal } from '@/components/ingestion';
@@ -20,9 +26,10 @@ export const CommandCenterPage: React.FC = () => {
   const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [isLiveApi, setIsLiveApi] = useState<boolean>(false);
   const [autoSync] = useState<boolean>(true);
+  const [activeTab, setActiveTab] = useState<'live' | 'incidents' | 'map'>('live');
 
   // Demo simulation step (1 to 6)
-  const [simulationStep, setSimulationStep] = useState<number>(4); // start at step 4 (Medical emergency) for rich initial view
+  const [simulationStep, setSimulationStep] = useState<number>(4);
 
   // Main Domain State
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -32,7 +39,7 @@ export const CommandCenterPage: React.FC = () => {
   const [timeline, setTimeline] = useState<IncidentSnapshot[]>([]);
   const [recommendations, setRecommendations] = useState<ActionPlan[]>([]);
 
-  // Individual Panel Loading & Error States (Fails independently)
+  // Panel Loading & Error States
   const [incidentsLoading, setIncidentsLoading] = useState<boolean>(true);
   const [incidentsError, setIncidentsError] = useState<string | null>(null);
 
@@ -41,9 +48,6 @@ export const CommandCenterPage: React.FC = () => {
 
   const [evidenceLoading, setEvidenceLoading] = useState<boolean>(false);
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
-
-  const [timelineLoading, setTimelineLoading] = useState<boolean>(false);
-  const [timelineError, setTimelineError] = useState<string | null>(null);
 
   const [recommendationsLoading, setRecommendationsLoading] = useState<boolean>(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
@@ -66,32 +70,27 @@ export const CommandCenterPage: React.FC = () => {
     const visibleSnapshots = DEMO_TIMELINE_SNAPSHOTS.slice(0, step);
     const latestSnapshot = visibleSnapshots[visibleSnapshots.length - 1];
 
-    // Build evolving simulated incident based on current snapshot
+    const baseIncident = DEMO_INCIDENTS[0];
     const simulatedIncident: Incident = {
-      ...DEMO_INCIDENTS[0],
+      ...baseIncident,
       severity: latestSnapshot.severity,
       priority_level: latestSnapshot.severity,
       priority_score: latestSnapshot.priority_score,
       people_affected: latestSnapshot.people_affected,
       access_status: latestSnapshot.access_status,
-      current_needs: latestSnapshot.active_needs.map((needType: NeedType, idx: number) => ({
-        need_id: `SIM-NEED-${idx + 1}`,
-        type: needType,
-        urgency: latestSnapshot.severity === 'critical' ? 'critical' : 'high',
-        confidence: 0.94,
-        status: 'unmet' as const,
-        identified_at: latestSnapshot.timestamp,
-      })),
+      // Derive current needs directly from base incident matching the active needs in latest snapshot
+      current_needs: baseIncident.current_needs.filter((n) =>
+        latestSnapshot.active_needs.includes(n.type)
+      ),
       snapshots: visibleSnapshots,
       updated_at: latestSnapshot.timestamp,
     };
 
     const simulatedIncidents: Incident[] = [
       simulatedIncident,
-      DEMO_INCIDENTS[1], // secondary background incident
+      DEMO_INCIDENTS[1],
     ];
 
-    // Filter evidence based on timestamps
     const maxTime = new Date(latestSnapshot.timestamp).getTime();
     const visibleEvidence = DEMO_EVIDENCE.filter(
       (e: Evidence) => new Date(e.raw_report?.timestamp || e.extracted_at).getTime() <= maxTime
@@ -150,26 +149,36 @@ export const CommandCenterPage: React.FC = () => {
   const loadIncidentData = useCallback(async (id: string) => {
     if (isDemoMode) {
       const state = getSimulatedState(simulationStep);
-      const inc = state.incidents.find((i: Incident) => i.incident_id === id) || state.incidents[0];
+      const isPrimary = id === state.selectedIncident.incident_id || !id;
+      const inc = isPrimary
+        ? state.selectedIncident
+        : state.incidents.find((i: Incident) => i.incident_id === id) || state.incidents[0];
+
       setSelectedIncident(inc);
-      setEvidence(state.evidence);
-      setTimeline(state.snapshots);
-      setRecommendations(state.recommendations);
+      if (inc.incident_id === state.selectedIncident.incident_id) {
+        setEvidence(state.evidence);
+        setTimeline(state.snapshots);
+        setRecommendations(state.recommendations);
+      } else {
+        const incEvidence = (inc.evidence_links || [])
+          .map((l) => l.evidence)
+          .filter((e): e is Evidence => Boolean(e));
+        setEvidence(incEvidence);
+        setTimeline(inc.snapshots || []);
+        setRecommendations(inc.active_recommendation ? [inc.active_recommendation] : []);
+      }
       setDetailLoading(false);
       setEvidenceLoading(false);
-      setTimelineLoading(false);
       setRecommendationsLoading(false);
       return;
     }
 
     setDetailLoading(true);
     setEvidenceLoading(true);
-    setTimelineLoading(true);
     setRecommendationsLoading(true);
 
     setDetailError(null);
     setEvidenceError(null);
-    setTimelineError(null);
     setRecommendationsError(null);
 
     // 1. Fetch Incident Detail
@@ -186,7 +195,7 @@ export const CommandCenterPage: React.FC = () => {
       .then((evLinks) => {
         if (!isMountedRef.current) return;
         const evList = evLinks.map((l) => l.evidence).filter((e): e is Evidence => Boolean(e));
-        setEvidence(evList.length > 0 ? evList : DEMO_EVIDENCE);
+        setEvidence(evList);
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Failed to load evidence';
@@ -197,11 +206,7 @@ export const CommandCenterPage: React.FC = () => {
     // 3. Fetch Timeline Snapshots
     api.getIncidentTimeline(id)
       .then((snaps: IncidentSnapshot[]) => isMountedRef.current && setTimeline(snaps))
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : 'Failed to load timeline';
-        if (isMountedRef.current) setTimelineError(msg);
-      })
-      .finally(() => isMountedRef.current && setTimelineLoading(false));
+      .catch(() => {});
 
     // 4. Fetch AI Recommendations
     api.getIncidentRecommendations(id)
@@ -347,8 +352,10 @@ export const CommandCenterPage: React.FC = () => {
     }
   };
 
-  // Find latest snapshot for "What Changed?"
-  const latestSnapshot = timeline.length > 0 ? timeline[timeline.length - 1] : null;
+  // Find latest snapshot for selected incident
+  const incidentSnapshots = timeline.filter((s) => !selectedIncident || s.incident_id === selectedIncident.incident_id);
+  const latestSnapshot = incidentSnapshots.length > 0 ? incidentSnapshots[incidentSnapshots.length - 1] : null;
+  const attentionCount = incidents.filter(i => i.severity === 'critical' || i.severity === 'high').length || 1;
 
   const handleOpenAddReport = (incidentId?: string) => {
     setTargetIncidentId(incidentId || null);
@@ -358,7 +365,6 @@ export const CommandCenterPage: React.FC = () => {
   const handleReportSubmitted = async (response: ReportSubmissionResponse) => {
     setIsAddReportOpen(false);
 
-    // Target the matched incident
     const targetId = response.incident_id || selectedIncidentId || 'INC-001';
     setSelectedIncidentId(targetId);
 
@@ -382,12 +388,14 @@ export const CommandCenterPage: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', display: 'flex', flexDirection: 'column' }}>
-      {/* Top Operations Header */}
+      {/* Top Bar: CRISISLENS, LIVE, INCIDENTS, MAP, + ADD REPORT */}
       <Header
         isLiveApi={isLiveApi}
         onToggleSource={toggleSource}
         onAddReport={() => handleOpenAddReport()}
-        attentionCount={incidents.filter(i => i.severity === 'critical' || i.severity === 'high').length || 1}
+        activeTab={activeTab}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        attentionCount={attentionCount}
         isDemoMode={isDemoMode}
         simulationStep={simulationStep}
         totalSteps={DEMO_TIMELINE_SNAPSHOTS.length}
@@ -400,90 +408,141 @@ export const CommandCenterPage: React.FC = () => {
         }
       />
 
-      {/* Main Command Center Workspace */}
-      <main
+      {/* Section 2: "Needs Attention" Operational Summary at Top */}
+      <div
         style={{
-          flex: 1,
-          padding: '16px 20px',
-          maxWidth: '1720px',
+          maxWidth: '1800px',
           width: '100%',
-          margin: '0 auto',
+          margin: '12px auto 0 auto',
+          padding: '0 20px',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        {/* ROW 1: Active Incidents Queue (Left) + Spatial Map (Right) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 380px) 1fr', gap: '16px', minHeight: '340px' }}>
-          <div>
-            <IncidentList
-              incidents={incidents}
-              selectedIncidentId={selectedIncidentId || undefined}
-              onSelectIncident={(id: string) => setSelectedIncidentId(id)}
-              loading={incidentsLoading}
-              error={incidentsError}
-              onRetry={fetchIncidents}
-            />
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: attentionCount > 0 ? '#dc2626' : '#16a34a',
+              display: 'inline-block',
+            }}
+          />
+          <span
+            style={{
+              fontSize: '13px',
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              color: '#0f172a',
+            }}
+          >
+            {attentionCount} {attentionCount === 1 ? 'INCIDENT NEEDS ATTENTION' : 'INCIDENTS NEED ATTENTION'}
+          </span>
+        </div>
+      </div>
 
-          <div>
-            <IncidentMap
-              incidents={incidents}
-              selectedIncident={selectedIncident}
-              onSelectIncident={(id: string) => setSelectedIncidentId(id)}
-            />
+      {/* Notification banner on new evidence ingestion */}
+      {newReportHighlight && (
+        <div
+          style={{
+            maxWidth: '1800px',
+            width: '100%',
+            margin: '8px auto 0 auto',
+            padding: '8px 20px',
+          }}
+        >
+          <div
+            style={{
+              padding: '8px 14px',
+              borderRadius: '4px',
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #86efac',
+              color: '#166534',
+              fontSize: '12px',
+              fontWeight: 600,
+            }}
+          >
+            ✓ New fragmented evidence analyzed & matched. Incident updated.
           </div>
         </div>
+      )}
 
-        {/* Selected Incident Situation Area */}
-        {selectedIncident && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* ROW 2: Selected Incident Header & NOW Briefing */}
-            <IncidentDetailPanel
-              incident={selectedIncident}
-              loading={detailLoading}
-              error={detailError}
-              onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
-              onAddEvidence={(id) => handleOpenAddReport(id)}
-            />
+      {/* Main Command Center Area:
+          LEFT: Active incident list
+          CENTER: Map
+          RIGHT / LOWER: Selected incident information
+      */}
+      <main
+        className="command-center-layout"
+        style={{
+          flex: 1,
+          padding: '12px 20px 20px 20px',
+          maxWidth: '1800px',
+          width: '100%',
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: '290px minmax(360px, 1fr) minmax(460px, 1.3fr)',
+          gap: '16px',
+          alignItems: 'start',
+        }}
+      >
+        {/* LEFT: Active Incident List (Primary Navigation) */}
+        <div style={{ position: 'sticky', top: '68px', maxHeight: 'calc(100vh - 84px)', display: 'flex', flexDirection: 'column' }}>
+          <IncidentList
+            incidents={incidents}
+            selectedIncidentId={selectedIncidentId || undefined}
+            onSelectIncident={(id: string) => setSelectedIncidentId(id)}
+            loading={incidentsLoading}
+            error={incidentsError}
+            onRetry={fetchIncidents}
+          />
+        </div>
 
-            {/* Notification alert on new evidence ingestion */}
-            {newReportHighlight && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 14px',
-                  borderRadius: '6px',
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #86efac',
-                  color: '#166534',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                }}
-              >
-                <span>✓ New evidence ingested & matched. Situation evolution and delta summary updated below.</span>
-              </div>
-            )}
+        {/* CENTER: Map (Spatial Context: Where is this happening?) */}
+        <div style={{ position: 'sticky', top: '68px', height: 'calc(100vh - 84px)' }}>
+          <IncidentMap
+            incidents={incidents}
+            selectedIncident={selectedIncident}
+            onSelectIncident={(id: string) => setSelectedIncidentId(id)}
+          />
+        </div>
 
-            {/* ROW 3: What Changed? */}
-            <WhatChangedBanner
-              snapshot={latestSnapshot}
-              previousSeverity={timeline.length > 1 ? timeline[timeline.length - 2].severity : undefined}
-            />
+        {/* RIGHT / LOWER: Selected Incident Information (Ordered Hierarchy 1 to 8) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto' }}>
+          {selectedIncident ? (
+            <>
+              {/* 1. INCIDENT & 2. NOW */}
+              <IncidentDetailPanel
+                incident={selectedIncident}
+                loading={detailLoading}
+                error={detailError}
+                onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
+                onAddEvidence={(id) => handleOpenAddReport(id)}
+              />
 
-            {/* ROW 4: Evidence & Timeline (Left) + Needs, Priority & Recommendations (Right) */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
-              {/* Column 1: Evidence & Evolution Timeline */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <SituationTimeline
-                  snapshots={timeline}
-                  loading={timelineLoading}
-                  error={timelineError}
-                  onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
+              {/* Contradictions Flag (Calmly displayed if conflicting reports exist) */}
+              {selectedIncident.contradictions && selectedIncident.contradictions.length > 0 && (
+                <ContradictionAlert
+                  contradictions={selectedIncident.contradictions}
+                  onReviewEvidence={() => {
+                    const el = document.getElementById('evidence-section');
+                    el?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                 />
+              )}
 
+              {/* 3. WHAT CHANGED (Chronological situation changes) */}
+              <WhatChangedBanner
+                snapshot={latestSnapshot}
+                snapshots={incidentSnapshots.length > 0 ? incidentSnapshots : (selectedIncident.snapshots || [])}
+                previousSeverity={incidentSnapshots.length > 1 ? incidentSnapshots[incidentSnapshots.length - 2].severity : undefined}
+              />
+
+              {/* 4. EVIDENCE (Progressive disclosure, sources breakdown & media) */}
+              <div id="evidence-section">
                 <EvidencePanel
                   evidenceList={evidence}
                   evidenceLinks={selectedIncident.evidence_links}
@@ -494,38 +553,45 @@ export const CommandCenterPage: React.FC = () => {
                 />
               </div>
 
-              {/* Column 2: Current Needs, Priority Assessment & Action Recommendations */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <NeedsPanel needs={selectedIncident.current_needs} />
+              {/* 5. CURRENT NEEDS (Compact table) */}
+              <NeedsPanel needs={selectedIncident.current_needs} />
 
-                <PriorityDisplay
-                  priorityScore={selectedIncident.priority_score}
-                  priorityLevel={selectedIncident.priority_level}
-                  reasons={selectedIncident.active_recommendation?.priority_rationale || latestSnapshot?.delta_summary || []}
-                />
+              {/* 6. PRIORITY (Level & why) */}
+              <PriorityDisplay
+                priorityScore={selectedIncident.priority_score}
+                priorityLevel={selectedIncident.priority_level}
+                priorityResult={selectedIncident.priority_result}
+                reasons={
+                  selectedIncident.priority_result?.reasons && selectedIncident.priority_result.reasons.length > 0
+                    ? selectedIncident.priority_result.reasons
+                    : selectedIncident.active_recommendation?.priority_rationale && selectedIncident.active_recommendation.priority_rationale.length > 0
+                    ? selectedIncident.active_recommendation.priority_rationale
+                    : (latestSnapshot && latestSnapshot.delta_summary && latestSnapshot.delta_summary.length > 0)
+                    ? latestSnapshot.delta_summary
+                    : []
+                }
+              />
 
-                <RecommendationPanel
-                  recommendations={recommendations}
-                  loading={recommendationsLoading}
-                  error={recommendationsError}
-                  onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
-                  onVerify={handleVerify}
-                  onReject={handleReject}
-                  onEdit={handleEdit}
-                />
-              </div>
+              {/* 7. RECOMMENDED RESPONSE & 8. HUMAN VERIFICATION */}
+              <RecommendationPanel
+                recommendations={recommendations}
+                loading={recommendationsLoading}
+                error={recommendationsError}
+                onRetry={() => selectedIncidentId && loadIncidentData(selectedIncidentId)}
+                onVerify={handleVerify}
+                onReject={handleReject}
+                onEdit={handleEdit}
+              />
+            </>
+          ) : !incidentsLoading ? (
+            <div style={{ padding: '32px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+              Select an active incident from the list to view situation details.
             </div>
-          </div>
-        )}
-
-        {!selectedIncident && !incidentsLoading && (
-          <div style={{ padding: '32px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b' }}>
-            Select an active incident from the queue above to inspect the situation.
-          </div>
-        )}
+          ) : null}
+        </div>
       </main>
 
-      {/* Information Ingestion Modal */}
+      {/* Ingestion Modal: Fragmented Information -> Evidence Analysis -> Incident Match */}
       <AddReportModal
         isOpen={isAddReportOpen}
         onClose={() => setIsAddReportOpen(false)}
