@@ -278,10 +278,67 @@ class Contradiction(BaseModel):
     requires_human_resolution: bool = True
     resolved: bool = False
     resolution_notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=utc_now)
+    resolved_at: Optional[datetime] = None
+    resolved_by: Optional[str] = None
 
 
 # ============================================================================
-# 10. INCIDENT (The Core Evolving Object)
+# 10. MATCH RESULT & PROVENANCE (Member 2 Incident Intelligence)
+# ============================================================================
+
+class MatchDecision(str, Enum):
+    MATCH = "MATCH"
+    NO_MATCH = "NO_MATCH"
+    UNCERTAIN = "UNCERTAIN"
+
+
+class MatchSubScores(BaseModel):
+    spatial_score: float = Field(..., ge=0.0, le=1.0, description="Spatial proximity score [0-1]")
+    temporal_score: float = Field(..., ge=0.0, le=1.0, description="Temporal proximity score [0-1]")
+    semantic_score: float = Field(..., ge=0.0, le=1.0, description="Disaster type and hazard score [0-1]")
+    context_score: float = Field(..., ge=0.0, le=1.0, description="Entity/landmark/needs overlap score [0-1]")
+    total_score: float = Field(..., ge=0.0, le=1.0, description="Weighted composite score [0-1]")
+
+
+class MatchResult(BaseModel):
+    decision: MatchDecision
+    incident_id: Optional[str] = None
+    overall_score: float = Field(..., ge=0.0, le=1.0)
+    sub_scores: MatchSubScores
+    reasons: List[str] = Field(default_factory=list)
+    matched_at: datetime = Field(default_factory=utc_now)
+
+
+class FieldProvenance(BaseModel):
+    field_name: str
+    source_evidence_id: str
+    confidence: float = Field(1.0, ge=0.0, le=1.0)
+    value: Any = None
+    previous_value: Optional[Any] = None
+    updated_at: datetime = Field(default_factory=utc_now)
+    rationale: Optional[str] = None
+
+
+class FieldDiff(BaseModel):
+    field_name: str
+    before: Any = None
+    after: Any = None
+    source_evidence_id: Optional[str] = None
+    description: str
+
+
+class SituationDelta(BaseModel):
+    incident_id: str
+    from_snapshot_id: Optional[str] = None
+    to_snapshot_id: str
+    timestamp: datetime = Field(default_factory=utc_now)
+    delta_summary: List[str] = Field(default_factory=list)
+    field_diffs: List[FieldDiff] = Field(default_factory=list)
+
+
+# ============================================================================
+# 11. INCIDENT (The Core Evolving Object)
 # ============================================================================
 
 class Incident(BaseModel):
@@ -301,5 +358,7 @@ class Incident(BaseModel):
     active_recommendation: Optional[ActionPlan] = None
     snapshots: List[IncidentSnapshot] = Field(default_factory=list)
     contradictions: List[Contradiction] = Field(default_factory=list)
+    field_provenance: Dict[str, FieldProvenance] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
+

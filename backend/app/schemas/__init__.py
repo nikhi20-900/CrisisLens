@@ -21,6 +21,12 @@ from app.schemas.domain import (
     ActionPlan,
     IncidentSnapshot,
     Contradiction,
+    MatchDecision,
+    MatchSubScores,
+    MatchResult,
+    FieldProvenance,
+    FieldDiff,
+    SituationDelta,
     Incident,
     utc_now,
 )
@@ -48,6 +54,13 @@ __all__ = [
     "ActionPlan",
     "IncidentSnapshot",
     "Contradiction",
+    "MatchDecision",
+    "MatchSubScores",
+    "MatchResult",
+    "FieldProvenance",
+    "FieldDiff",
+    "SituationDelta",
     "Incident",
     "utc_now",
 ]
+
