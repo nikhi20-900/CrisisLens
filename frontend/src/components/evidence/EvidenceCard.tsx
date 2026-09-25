@@ -30,10 +30,10 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence, similarity
   // Media items
   const mediaList = evidence.raw_report?.media || [];
   const imageMedia = mediaList.find(
-    (m) => m.media_type.includes('image') || m.url.match(/\.(jpg|jpeg|png)$/i) || m.url.includes('unsplash.com')
+    (m) => m.media_type.includes('image') || m.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) || m.url.includes('unsplash.com') || m.url.startsWith('data:image/')
   );
   const videoMedia = mediaList.find(
-    (m) => m.media_type.includes('video') || m.url.match(/\.(mp4|mov)$/i)
+    (m) => m.media_type.includes('video') || m.url.match(/\.(mp4|mov|webm)$/i) || m.url.startsWith('data:video/') || m.url.startsWith('blob:')
   );
 
   const typeLabel = imageMedia ? '📷 Photo' : videoMedia ? '🎥 Video' : '📝 Text Report';
@@ -77,7 +77,7 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence, similarity
             alt={imageMedia.caption || 'Field flood report image'}
             style={{
               width: '100%',
-              maxHeight: '160px',
+              maxHeight: '180px',
               objectFit: 'cover',
               display: 'block',
               backgroundColor: '#f1f5f9',
@@ -97,22 +97,38 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence, similarity
       )}
 
       {videoMedia && (
-        <div
-          style={{
-            margin: '4px 0',
-            borderRadius: '4px',
-            backgroundColor: '#0f172a',
-            padding: '16px',
-            color: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            fontSize: '12px',
-          }}
-        >
-          <span>▶ Video Feed:</span>
-          <span style={{ fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>{videoMedia.caption || 'Field recording'}</span>
+        <div style={{ margin: '4px 0', borderRadius: '4px', overflow: 'hidden', border: '1px solid #e2e8f0', backgroundColor: '#000000' }}>
+          {videoMedia.url.startsWith('data:video') || videoMedia.url.startsWith('blob:') || videoMedia.url.match(/\.(mp4|webm|mov)$/i) ? (
+            <video
+              src={videoMedia.url}
+              controls
+              style={{
+                width: '100%',
+                maxHeight: '200px',
+                display: 'block',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                padding: '16px',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                fontSize: '12px',
+              }}
+            >
+              <span>▶ Video Feed:</span>
+              <span style={{ fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>{videoMedia.caption || 'Field recording'}</span>
+            </div>
+          )}
+          {videoMedia.caption && (
+            <div style={{ padding: '4px 8px', fontSize: '11px', color: '#94a3b8', backgroundColor: '#0f172a' }}>
+              Caption: {videoMedia.caption}
+            </div>
+          )}
         </div>
       )}
 

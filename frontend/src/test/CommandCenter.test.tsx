@@ -257,6 +257,62 @@ describe('CrisisLens Command Center Components', () => {
     expect(onSubmitted).toHaveBeenCalled();
   });
 
+  it('allows uploading image and video files in AddReportModal with preview and controls', async () => {
+    const onClose = vi.fn();
+    const onSubmitted = vi.fn();
+
+    render(
+      <AddReportModal
+        isOpen={true}
+        onClose={onClose}
+        preselectedIncidentId="INC-001"
+        onReportSubmitted={onSubmitted}
+      />
+    );
+
+    // Verify information source select box exists with proper options
+    const select = screen.getByRole('combobox');
+    expect(select).toBeInTheDocument();
+    expect(screen.getByText('Citizen Report')).toBeInTheDocument();
+    expect(screen.getByText('First Responder')).toBeInTheDocument();
+
+    // Initially opens with prefilled demo photo
+    expect(screen.getByText(/Upload Picture/i)).toBeInTheDocument();
+    expect(screen.getByText('flood_bridge_road.jpg')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Change File/i })).toBeInTheDocument();
+
+    // Remove prefilled file to reveal empty dropzone
+    const initialRemoveBtn = screen.getByRole('button', { name: /Remove/i });
+    fireEvent.click(initialRemoveBtn);
+    expect(screen.getByText(/Choose Picture File/i)).toBeInTheDocument();
+
+    // Switch to video
+    const videoTab = screen.getByRole('button', { name: /^Video$/i });
+    fireEvent.click(videoTab);
+    expect(screen.getByText(/Upload Video/i)).toBeInTheDocument();
+    expect(screen.getByText(/Choose Video File/i)).toBeInTheDocument();
+
+    // Upload a new image file
+    const file = new File(['dummy-image-content'], 'test_flood.png', { type: 'image/png' });
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(fileInput).toBeTruthy();
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByText('test_flood.png')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Remove/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Change File/i })).toBeInTheDocument();
+    });
+
+    // Remove the uploaded file
+    const removeBtn = screen.getByRole('button', { name: /Remove/i });
+    fireEvent.click(removeBtn);
+
+    expect(screen.queryByText('test_flood.png')).not.toBeInTheDocument();
+    expect(screen.getByText(/Choose Picture File/i)).toBeInTheDocument();
+  });
+
   it('renders CommandCenterPage with top bar, operational summary, and full 1-to-8 operational information hierarchy', async () => {
     render(<CommandCenterPage />);
 

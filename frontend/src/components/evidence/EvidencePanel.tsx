@@ -48,13 +48,13 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   // Source breakdown counts
   const photosCount = items.filter(
     (it) => it.evidence.raw_report?.media?.some(
-      (m) => m.media_type.includes('image') || m.url.match(/\.(jpg|jpeg|png)$/i) || m.url.includes('unsplash.com')
+      (m) => m.media_type.includes('image') || m.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) || m.url.includes('unsplash.com') || m.url.startsWith('data:image/')
     )
   ).length;
 
   const videosCount = items.filter(
     (it) => it.evidence.raw_report?.media?.some(
-      (m) => m.media_type.includes('video') || m.url.match(/\.(mp4|mov)$/i)
+      (m) => m.media_type.includes('video') || m.url.match(/\.(mp4|mov|webm)$/i) || m.url.startsWith('data:video/') || m.url.startsWith('blob:')
     )
   ).length;
 
@@ -204,8 +204,8 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             {items.map(({ evidence }, idx) => {
               const time = formatTime(evidence.raw_report?.timestamp || evidence.extracted_at);
               const source = evidence.raw_report?.source || 'Citizen';
-              const hasImg = evidence.raw_report?.media?.some(m => m.media_type.includes('image') || m.url.includes('unsplash.com'));
-              const hasVid = evidence.raw_report?.media?.some(m => m.media_type.includes('video'));
+              const hasImg = evidence.raw_report?.media?.some(m => m.media_type.includes('image') || m.url.includes('unsplash.com') || m.url.startsWith('data:image/'));
+              const hasVid = evidence.raw_report?.media?.some(m => m.media_type.includes('video') || m.url.startsWith('data:video/') || m.url.startsWith('blob:'));
               const icon = hasImg ? '📷' : hasVid ? '🎥' : source.includes('responder') || source.includes('police') ? '✓' : '📝';
               const label = hasImg ? 'Flood image' : hasVid ? 'Road video' : source.includes('responder') ? 'Responder confirmation' : `${source} report`;
 
