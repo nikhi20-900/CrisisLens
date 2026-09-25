@@ -85,4 +85,5 @@ async def test_human_verification_workflow():
 
     # Verify resource status shifted to ASSIGNED
     boat_resource = engine.get_resource("RES-01")
+    assert boat_resource is not None
     assert boat_resource.availability == ResourceAvailability.ASSIGNED
