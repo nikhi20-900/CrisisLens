@@ -98,7 +98,11 @@ export const crisisLensApi = {
     // Update local demo incident state if present
     const inc = localDemoIncidents.find((i) => i.incident_id === 'INC-001') || localDemoIncidents[0];
     if (inc) {
-      if (isCritical) inc.severity = 'critical';
+      if (isCritical) {
+        inc.severity = 'critical';
+        inc.priority_level = 'critical';
+        inc.priority_score = 88.5;
+      }
       if (isBlocked) inc.access_status = 'blocked';
       if (fallbackEvidence.people_affected) {
         inc.people_affected = Math.max(inc.people_affected, fallbackEvidence.people_affected);
@@ -110,6 +114,10 @@ export const crisisLensApi = {
         isBlocked ? 'Road access confirmed BLOCKED' : 'Corroborated water logging',
       ];
       if (hasMedical) deltas.push('Medical attention required');
+      if (isCritical) {
+        deltas.push('Severity escalated to CRITICAL');
+        deltas.push('Dynamic priority recalculated to 88.5 / 100');
+      }
 
       const newSnap: any = {
         snapshot_id: `SNAP-${Date.now().toString().slice(-4)}`,
@@ -119,7 +127,7 @@ export const crisisLensApi = {
         people_affected: inc.people_affected,
         access_status: inc.access_status,
         active_needs: extractedNeeds,
-        priority_score: isCritical ? 98.0 : 85.0,
+        priority_score: inc.priority_score,
         summary: `Update from Evidence ${evId}: ${deltas.join(', ')}`,
         delta_summary: deltas,
       };

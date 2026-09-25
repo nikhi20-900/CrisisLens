@@ -1,5 +1,4 @@
 import React from 'react';
-import { Info } from 'lucide-react';
 
 export interface EmptyStateProps {
   title?: string;
@@ -12,9 +11,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   message,
   description,
-  icon = <Info size={28} color="var(--text-muted, #64748b)" />,
+  icon,
 }) => {
-  const text = description || message || 'No data available';
+  const text = description || message || 'No incidents currently require attention.';
 
   return (
     <div
@@ -23,19 +22,23 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '32px 16px',
+        padding: '24px 16px',
         textAlign: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.02)',
-        borderRadius: '8px',
-        border: '1px dashed var(--border-subtle, #334155)',
-        gap: '8px',
+        backgroundColor: '#f8fafc',
+        borderRadius: '4px',
+        border: '1px dashed #cbd5e1',
+        gap: '4px',
       }}
     >
-      <div>{icon}</div>
+      {icon && <div style={{ marginBottom: '2px' }}>{icon}</div>}
       {title && (
-        <h4 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary, #94a3b8)' }}>{title}</h4>
+        <h4 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#334155', margin: 0 }}>
+          {title}
+        </h4>
       )}
-      <p style={{ fontSize: '12px', color: 'var(--text-muted, #64748b)', maxWidth: '320px' }}>{text}</p>
+      <p style={{ fontSize: '12px', color: '#64748b', margin: 0, maxWidth: '320px', lineHeight: 1.4 }}>
+        {text}
+      </p>
     </div>
   );
 };

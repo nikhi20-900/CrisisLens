@@ -86,3 +86,15 @@ button {
 input, textarea, select {
   font-family: inherit;
 }
+
+/* Responsive Command Center Behavior: Stacks sequentially on smaller screens */
+@media (max-width: 1100px) {
+  .command-center-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .command-center-layout > div {
+    position: static !important;
+    max-height: none !important;
+    height: auto !important;
+  }
+}
