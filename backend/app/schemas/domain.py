@@ -174,6 +174,7 @@ class EvidenceLink(BaseModel):
     linked_at: datetime = Field(default_factory=utc_now)
     similarity_score: float = Field(1.0, ge=0.0, le=1.0, description="Match confidence / similarity metric")
     link_rationale: str = Field(..., description="Explainable reason for linking (spatial/temporal/semantic)")
+    evidence: Optional[Evidence] = Field(None, description="Embedded or resolved Evidence object")
 
 
 # ============================================================================

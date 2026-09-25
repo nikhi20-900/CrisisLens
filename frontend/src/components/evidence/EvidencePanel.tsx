@@ -115,7 +115,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
               }}
             >
               <Plus size={12} />
-              <span>+ ADD EVIDENCE</span>
+              <span>ADD EVIDENCE</span>
             </button>
           )}
 

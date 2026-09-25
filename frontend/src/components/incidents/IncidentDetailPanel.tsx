@@ -157,7 +157,7 @@ export const IncidentDetailPanel: React.FC<IncidentDetailPanelProps> = ({
             }}
           >
             <Plus size={12} color="#0f172a" />
-            <span>+ ADD EVIDENCE</span>
+            <span>ADD EVIDENCE</span>
           </button>
         )}
       </div>

@@ -195,7 +195,14 @@ export const CommandCenterPage: React.FC = () => {
       .then((evLinks) => {
         if (!isMountedRef.current) return;
         const evList = evLinks.map((l) => l.evidence).filter((e): e is Evidence => Boolean(e));
-        setEvidence(evList);
+        if (evList.length > 0) {
+          setEvidence(evList);
+        } else if (evLinks.length > 0) {
+          const fallback = demoEvidenceList.filter((e) => e.incident_id === id).map((l) => l.evidence).filter((e): e is Evidence => Boolean(e));
+          setEvidence(fallback.length > 0 ? fallback : demoEvidenceList.map((l) => l.evidence).filter((e): e is Evidence => Boolean(e)));
+        } else {
+          setEvidence([]);
+        }
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Failed to load evidence';

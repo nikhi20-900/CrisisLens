@@ -83,6 +83,7 @@ class IncidentFusionService:
             similarity_score=0.92,
             link_rationale="Proximity within 200m and shared flood context",
             linked_at=utc_now(),
+            evidence=evidence,
         )
         incident.evidence_links.append(link)
 

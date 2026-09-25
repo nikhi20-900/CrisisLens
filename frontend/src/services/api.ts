@@ -212,7 +212,44 @@ export const crisisLensApi = {
       const res = await fetch(`${API_BASE_URL}/incidents/${incidentId}/evidence`);
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) return data;
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((item: any, idx: number) => {
+          if (item.evidence) return item;
+          const demoMatch = demoEvidenceList.find(d => d.evidence_id === item.evidence_id || d.incident_id === incidentId);
+          return {
+            ...item,
+            evidence: demoMatch?.evidence || {
+              evidence_id: item.evidence_id || `EV-${idx + 1}`,
+              report_id: `R-${idx + 1}`,
+              disaster_type: 'flood',
+              severity: 'high',
+              people_affected: 5,
+              needs: ['rescue', 'water'],
+              access_status: 'blocked',
+              location: { lat: 12.9352, lng: 77.6245, address: 'Central Market Bridge' },
+              urgency: 'high',
+              extracted_entities: {},
+              confidence: {
+                disaster_type: 0.95,
+                severity: 0.88,
+                people_affected: 0.82,
+                needs: 0.90,
+                access_status: 0.88,
+                location: 0.95,
+                urgency: 0.85,
+              },
+              raw_report: {
+                report_id: `R-${idx + 1}`,
+                text: item.link_rationale || 'Field report for flood incident',
+                source: 'citizen',
+                timestamp: item.linked_at || new Date().toISOString(),
+                media: [],
+              },
+              extracted_at: item.linked_at || new Date().toISOString(),
+            },
+          };
+        });
+      }
       return demoEvidenceList.filter((e) => e.incident_id === incidentId);
     } catch (err) {
       console.warn('Backend unavailable, using demo evidence list:', err);

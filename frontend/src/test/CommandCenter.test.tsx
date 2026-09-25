@@ -161,12 +161,12 @@ describe('CrisisLens Command Center Components', () => {
     expect(screen.getAllByText(/SOURCES/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Photo/i).length).toBeGreaterThan(0);
 
-    const addBtn = screen.getByRole('button', { name: /\+ ADD EVIDENCE/i });
+    const addBtn = screen.getByRole('button', { name: /ADD EVIDENCE/i });
     fireEvent.click(addBtn);
     expect(onAddEvidence).toHaveBeenCalled();
   });
 
-  it('renders IncidentDetailPanel with + ADD EVIDENCE button and triggers handler', () => {
+  it('renders IncidentDetailPanel with ADD EVIDENCE button and triggers handler', () => {
     const onAddEvidence = vi.fn();
     render(
       <IncidentDetailPanel
@@ -175,7 +175,7 @@ describe('CrisisLens Command Center Components', () => {
       />
     );
 
-    const addBtn = screen.getByRole('button', { name: /\+ ADD EVIDENCE/i });
+    const addBtn = screen.getByRole('button', { name: /ADD EVIDENCE/i });
     fireEvent.click(addBtn);
     expect(onAddEvidence).toHaveBeenCalledWith('INC-001');
   });
