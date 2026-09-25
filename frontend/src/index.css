@@ -1,32 +1,51 @@
 :root {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Color Palette - Command Center Dark Theme */
-  --bg-primary: #0a0d14;
-  --bg-secondary: #101622;
-  --bg-card: #151d2d;
-  --bg-card-hover: #1c263b;
-  --bg-elevated: #222e46;
+  /* Operational Emergency Room Palette (Light, high-contrast, calm) */
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --bg-hover: #f8fafc;
+  --bg-elevated: #e2e8f0;
 
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(56, 189, 248, 0.4);
+  --border-color: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --border-active: #0284c7;
 
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
   --text-muted: #64748b;
 
-  /* Accent & Alert Status Colors */
-  --color-primary: #38bdf8;
-  --color-primary-glow: rgba(56, 189, 248, 0.25);
+  --color-primary: #0284c7;
+  --color-primary-hover: #0369a1;
 
-  --severity-critical: #ef4444;
-  --severity-high: #f97316;
-  --severity-medium: #eab308;
-  --severity-low: #22c55e;
+  /* Semantic Severity System */
+  --severity-critical: #b91c1c;
+  --severity-critical-bg: #fef2f2;
+  --severity-critical-border: #fecaca;
+  --severity-critical-text: #991b1b;
 
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 15px rgba(56, 189, 248, 0.2);
+  --severity-high: #c2410c;
+  --severity-high-bg: #fff7ed;
+  --severity-high-border: #fed7aa;
+  --severity-high-text: #9a3412;
+
+  --severity-moderate: #b45309;
+  --severity-moderate-bg: #fffbeb;
+  --severity-moderate-border: #fde68a;
+  --severity-moderate-text: #92400e;
+
+  --severity-low: #15803d;
+  --severity-low-bg: #f0fdf4;
+  --severity-low-border: #bbf7d0;
+  --severity-low-text: #166534;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 }
 
 * {
@@ -37,7 +56,7 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-primary);
+  background-color: var(--bg-page);
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -53,10 +72,29 @@ a {
   text-decoration: none;
 }
 
+a:hover {
+  text-decoration: underline;
+}
+
 button {
   font-family: inherit;
   cursor: pointer;
   border: none;
   outline: none;
-  transition: all 0.2s ease;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+/* Responsive Command Center Behavior: Stacks sequentially on smaller screens */
+@media (max-width: 1100px) {
+  .command-center-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .command-center-layout > div {
+    position: static !important;
+    max-height: none !important;
+    height: auto !important;
+  }
 }

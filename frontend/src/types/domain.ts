@@ -48,6 +48,15 @@ export interface Report {
   timestamp: string;
 }
 
+export interface ReportSubmissionResponse {
+  status: string;
+  report_id: string;
+  evidence: Evidence;
+  evidence_link: EvidenceLink;
+  incident_id: string;
+  active_recommendation?: ActionPlan;
+}
+
 // 2. Evidence (AI-Extracted Knowledge)
 export interface EvidenceConfidence {
   disaster_type: number;
@@ -83,6 +92,7 @@ export interface EvidenceLink {
   linked_at: string;
   similarity_score: number;
   link_rationale: string;
+  evidence?: Evidence;
 }
 
 // 4. Impact
@@ -137,6 +147,8 @@ export interface ActionPlan {
   created_at: string;
 }
 
+export type Recommendation = ActionPlan;
+
 // 8. Incident Snapshot ("What Changed?")
 export interface IncidentSnapshot {
   snapshot_id: string;
@@ -162,6 +174,17 @@ export interface Contradiction {
   resolution_notes?: string;
 }
 
+// 9.5 Priority Result
+export interface PriorityResult {
+  score: number;
+  priority_level: SeverityLevel;
+  factors?: Record<string, number>;
+  reasons: string[];
+  confidence?: number;
+  situation_trend?: string;
+  configuration_version?: string;
+}
+
 // 10. Incident (Core Evolving Incident Object)
 export interface Incident {
   incident_id: string;
@@ -171,6 +194,7 @@ export interface Incident {
   severity: SeverityLevel;
   priority_level: SeverityLevel;
   priority_score: number;
+  priority_result?: PriorityResult;
   location: Location;
   people_affected: number;
   access_status: AccessStatus;
