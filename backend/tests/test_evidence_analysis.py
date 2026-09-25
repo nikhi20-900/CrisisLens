@@ -58,9 +58,10 @@ async def test_normal_flood_report():
     assert evidence.report_id == "R-001"
     assert evidence.disaster_type == DisasterType.FLOOD
     assert evidence.severity in [SeverityLevel.MEDIUM, SeverityLevel.HIGH]
-    assert evidence.location is not None
-    assert evidence.location.lat == 12.935
-    assert evidence.location.lng == 77.624
+    loc = evidence.location
+    assert loc is not None
+    assert loc.lat == 12.935
+    assert loc.lng == 77.624
     assert evidence.confidence.disaster_type >= 0.90
     assert evidence.confidence.location >= 0.90
 
@@ -192,7 +193,10 @@ async def test_video_analyzer_adapter():
         media=[media_item],
     )
     evidence = await service.analyze(report)
-    assert evidence.raw_report.media[0].url == "bridge-road-blocked.mp4"
+    raw = evidence.raw_report
+    assert raw is not None
+    assert len(raw.media) > 0
+    assert raw.media[0].url == "bridge-road-blocked.mp4"
     assert evidence.extracted_entities["has_video"] is True
     assert evidence.access_status == AccessStatus.BLOCKED
 
@@ -243,12 +247,15 @@ async def test_original_report_preservation():
     )
     evidence = await analyzer.analyze(original_report)
 
-    assert evidence.raw_report is not None
-    assert evidence.raw_report.report_id == "R-ORIG-01"
-    assert evidence.raw_report.text == original_report.text
-    assert evidence.raw_report.source == "emergency_call"
-    assert evidence.raw_report.reporter_id == "caller-99"
-    assert evidence.raw_report.location.lat == 12.92
+    raw = evidence.raw_report
+    assert raw is not None
+    assert raw.report_id == "R-ORIG-01"
+    assert raw.text == original_report.text
+    assert raw.source == "emergency_call"
+    assert raw.reporter_id == "caller-99"
+    loc = raw.location
+    assert loc is not None
+    assert loc.lat == 12.92
     assert evidence.report_id == "R-ORIG-01"
 
 
@@ -276,7 +283,9 @@ async def test_graceful_partial_analysis():
     assert evidence.report_id == "R-PARTIAL"
     assert evidence.disaster_type == DisasterType.FLOOD
     assert evidence.access_status == AccessStatus.BLOCKED
-    assert evidence.location.lat == 12.93
+    loc = evidence.location
+    assert loc is not None
+    assert loc.lat == 12.93
 
 
 # ============================================================================
