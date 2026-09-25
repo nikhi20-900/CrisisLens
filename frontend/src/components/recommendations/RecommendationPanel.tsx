@@ -132,11 +132,13 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                         RECOMMENDED ACTION PLAN #{rec.action_id}
                       </span>
                       <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', margin: '2px 0 0 0' }}>
-                        Deploy nearby rescue team
+                        {isPending ? 'Recommend deploying emergency response units' : 'Verified Action Plan'}
                       </h4>
                       {rec.resource_rationale && (
                         <p style={{ fontSize: '12px', color: '#475569', margin: '3px 0 0 0', lineHeight: 1.4 }}>
-                          {rec.resource_rationale}
+                          {isPending
+                            ? rec.resource_rationale.replace(/\bDispatched\b/gi, 'Recommend deploying')
+                            : rec.resource_rationale}
                         </p>
                       )}
                     </div>
@@ -203,7 +205,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                   {/* Nearby Resources & ETA */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      Nearby resource:
+                      {isPending ? 'Recommended resource:' : 'Assigned resource:'}
                     </span>
                     {rec.recommended_resources.map((res) => (
                       <div
@@ -220,6 +222,11 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       >
                         <span style={{ fontWeight: 600, color: '#0f172a' }}>
                           {res.name}
+                          {res.capacity && (
+                            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, marginLeft: '6px' }}>
+                              (capacity: {res.capacity})
+                            </span>
+                          )}
                         </span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#166534', fontWeight: 600 }}>
                           ETA: {res.estimated_eta_minutes ? `${res.estimated_eta_minutes} min` : 'Available nearby'}

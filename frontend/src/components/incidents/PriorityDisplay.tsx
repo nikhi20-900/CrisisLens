@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SeverityLevel } from '@/types/domain';
+import type { SeverityLevel, PriorityResult } from '@/types/domain';
 import { Badge } from '@/components/common/Badge';
 
 export interface PriorityDisplayProps {
@@ -8,6 +8,7 @@ export interface PriorityDisplayProps {
   level?: SeverityLevel;
   priorityLevel?: SeverityLevel;
   reasons?: string[];
+  priorityResult?: PriorityResult;
 }
 
 export const PriorityDisplay: React.FC<PriorityDisplayProps> = ({
@@ -16,9 +17,19 @@ export const PriorityDisplay: React.FC<PriorityDisplayProps> = ({
   level,
   priorityLevel,
   reasons = [],
+  priorityResult,
 }) => {
-  const finalScore = score !== undefined ? score : priorityScore !== undefined ? priorityScore : 0;
-  const finalLevel: SeverityLevel = level || priorityLevel || 'medium';
+  const finalScore =
+    priorityResult?.score !== undefined
+      ? priorityResult.score
+      : score !== undefined
+      ? score
+      : priorityScore !== undefined
+      ? priorityScore
+      : 0;
+  const finalLevel: SeverityLevel = priorityResult?.priority_level || level || priorityLevel || 'medium';
+  const finalReasons =
+    priorityResult?.reasons && priorityResult.reasons.length > 0 ? priorityResult.reasons : reasons;
 
   return (
     <div
@@ -52,11 +63,18 @@ export const PriorityDisplay: React.FC<PriorityDisplayProps> = ({
           </Badge>
         </div>
 
-        {finalScore > 0 && (
-          <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>
-            Score: <strong style={{ color: '#475569' }}>{finalScore.toFixed(1)}</strong> / 100
-          </span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {finalScore > 0 && (
+            <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>
+              Score: <strong style={{ color: '#475569' }}>{finalScore.toFixed(1)}</strong> / 100
+            </span>
+          )}
+          {priorityResult?.confidence !== undefined && (
+            <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>
+              Conf: <strong style={{ color: '#475569' }}>{Math.round(priorityResult.confidence * 100)}%</strong>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Reasons (Plain language backend-provided rationale) */}
@@ -64,13 +82,13 @@ export const PriorityDisplay: React.FC<PriorityDisplayProps> = ({
         <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '4px' }}>
           Reasons:
         </span>
-        {reasons.length === 0 ? (
+        {finalReasons.length === 0 ? (
           <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
             Priority established by active disaster indicators.
           </p>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {reasons.map((reason, idx) => (
+            {finalReasons.map((reason, idx) => (
               <li
                 key={idx}
                 style={{

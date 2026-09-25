@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { Incident, Evidence, IncidentSnapshot, ActionPlan, NeedType, ReportSubmissionResponse } from '@/types/domain';
+import type { Incident, Evidence, IncidentSnapshot, ActionPlan, ReportSubmissionResponse } from '@/types/domain';
 import { api } from '@/services/api';
 import {
   DEMO_INCIDENTS,
@@ -70,21 +70,18 @@ export const CommandCenterPage: React.FC = () => {
     const visibleSnapshots = DEMO_TIMELINE_SNAPSHOTS.slice(0, step);
     const latestSnapshot = visibleSnapshots[visibleSnapshots.length - 1];
 
+    const baseIncident = DEMO_INCIDENTS[0];
     const simulatedIncident: Incident = {
-      ...DEMO_INCIDENTS[0],
+      ...baseIncident,
       severity: latestSnapshot.severity,
       priority_level: latestSnapshot.severity,
       priority_score: latestSnapshot.priority_score,
       people_affected: latestSnapshot.people_affected,
       access_status: latestSnapshot.access_status,
-      current_needs: latestSnapshot.active_needs.map((needType: NeedType, idx: number) => ({
-        need_id: `SIM-NEED-${idx + 1}`,
-        type: needType,
-        urgency: latestSnapshot.severity === 'critical' ? 'critical' : 'high',
-        confidence: 0.94,
-        status: 'unmet' as const,
-        identified_at: latestSnapshot.timestamp,
-      })),
+      // Derive current needs directly from base incident matching the active needs in latest snapshot
+      current_needs: baseIncident.current_needs.filter((n) =>
+        latestSnapshot.active_needs.includes(n.type)
+      ),
       snapshots: visibleSnapshots,
       updated_at: latestSnapshot.timestamp,
     };
@@ -152,11 +149,24 @@ export const CommandCenterPage: React.FC = () => {
   const loadIncidentData = useCallback(async (id: string) => {
     if (isDemoMode) {
       const state = getSimulatedState(simulationStep);
-      const inc = state.incidents.find((i: Incident) => i.incident_id === id) || state.incidents[0];
+      const isPrimary = id === state.selectedIncident.incident_id || !id;
+      const inc = isPrimary
+        ? state.selectedIncident
+        : state.incidents.find((i: Incident) => i.incident_id === id) || state.incidents[0];
+
       setSelectedIncident(inc);
-      setEvidence(state.evidence);
-      setTimeline(state.snapshots);
-      setRecommendations(state.recommendations);
+      if (inc.incident_id === state.selectedIncident.incident_id) {
+        setEvidence(state.evidence);
+        setTimeline(state.snapshots);
+        setRecommendations(state.recommendations);
+      } else {
+        const incEvidence = (inc.evidence_links || [])
+          .map((l) => l.evidence)
+          .filter((e): e is Evidence => Boolean(e));
+        setEvidence(incEvidence);
+        setTimeline(inc.snapshots || []);
+        setRecommendations(inc.active_recommendation ? [inc.active_recommendation] : []);
+      }
       setDetailLoading(false);
       setEvidenceLoading(false);
       setRecommendationsLoading(false);
@@ -185,7 +195,7 @@ export const CommandCenterPage: React.FC = () => {
       .then((evLinks) => {
         if (!isMountedRef.current) return;
         const evList = evLinks.map((l) => l.evidence).filter((e): e is Evidence => Boolean(e));
-        setEvidence(evList.length > 0 ? evList : DEMO_EVIDENCE);
+        setEvidence(evList);
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Failed to load evidence';
@@ -342,8 +352,9 @@ export const CommandCenterPage: React.FC = () => {
     }
   };
 
-  // Find latest snapshot for "What Changed?"
-  const latestSnapshot = timeline.length > 0 ? timeline[timeline.length - 1] : null;
+  // Find latest snapshot for selected incident
+  const incidentSnapshots = timeline.filter((s) => !selectedIncident || s.incident_id === selectedIncident.incident_id);
+  const latestSnapshot = incidentSnapshots.length > 0 ? incidentSnapshots[incidentSnapshots.length - 1] : null;
   const attentionCount = incidents.filter(i => i.severity === 'critical' || i.severity === 'high').length || 1;
 
   const handleOpenAddReport = (incidentId?: string) => {
@@ -526,8 +537,8 @@ export const CommandCenterPage: React.FC = () => {
               {/* 3. WHAT CHANGED (Chronological situation changes) */}
               <WhatChangedBanner
                 snapshot={latestSnapshot}
-                snapshots={timeline.length > 0 ? timeline : (selectedIncident.snapshots || [])}
-                previousSeverity={timeline.length > 1 ? timeline[timeline.length - 2].severity : undefined}
+                snapshots={incidentSnapshots.length > 0 ? incidentSnapshots : (selectedIncident.snapshots || [])}
+                previousSeverity={incidentSnapshots.length > 1 ? incidentSnapshots[incidentSnapshots.length - 2].severity : undefined}
               />
 
               {/* 4. EVIDENCE (Progressive disclosure, sources breakdown & media) */}
@@ -549,7 +560,16 @@ export const CommandCenterPage: React.FC = () => {
               <PriorityDisplay
                 priorityScore={selectedIncident.priority_score}
                 priorityLevel={selectedIncident.priority_level}
-                reasons={selectedIncident.active_recommendation?.priority_rationale || latestSnapshot?.delta_summary || []}
+                priorityResult={selectedIncident.priority_result}
+                reasons={
+                  selectedIncident.priority_result?.reasons && selectedIncident.priority_result.reasons.length > 0
+                    ? selectedIncident.priority_result.reasons
+                    : selectedIncident.active_recommendation?.priority_rationale && selectedIncident.active_recommendation.priority_rationale.length > 0
+                    ? selectedIncident.active_recommendation.priority_rationale
+                    : (latestSnapshot && latestSnapshot.delta_summary && latestSnapshot.delta_summary.length > 0)
+                    ? latestSnapshot.delta_summary
+                    : []
+                }
               />
 
               {/* 7. RECOMMENDED RESPONSE & 8. HUMAN VERIFICATION */}
