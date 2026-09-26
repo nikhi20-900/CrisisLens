@@ -1,100 +1,237 @@
-:root {
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
-  /* Operational Emergency Room Palette (Light, high-contrast, calm) */
-  --bg-page: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-subtle: #f1f5f9;
-  --bg-hover: #f8fafc;
-  --bg-elevated: #e2e8f0;
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+  
+  /* Apple Neutral Surfaces & Text */
+  --color-ink: #f5f5f7;
+  --color-panel: #ffffff;
+  --color-raised: #f2f2f7;
+  --color-line: rgba(0, 0, 0, 0.08);
+  --color-paper: #1d1d1f;
+  --color-mute: #86868b;
+  
+  /* Apple Semantic Accents */
+  --color-amber: #0071e3;
+  --color-critical: #ff3b30;
+  --color-high: #ff9500;
+  --color-medium: #d97706;
+  --color-low: #0071e3;
+  --color-ok: #34c759;
+}
 
-  --border-color: #e2e8f0;
-  --border-subtle: #cbd5e1;
-  --border-active: #0284c7;
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-
-  --color-primary: #0284c7;
-  --color-primary-hover: #0369a1;
-
-  /* Semantic Severity System */
-  --severity-critical: #b91c1c;
-  --severity-critical-bg: #fef2f2;
-  --severity-critical-border: #fecaca;
-  --severity-critical-text: #991b1b;
-
-  --severity-high: #c2410c;
-  --severity-high-bg: #fff7ed;
-  --severity-high-border: #fed7aa;
-  --severity-high-text: #9a3412;
-
-  --severity-moderate: #b45309;
-  --severity-moderate-bg: #fffbeb;
-  --severity-moderate-border: #fde68a;
-  --severity-moderate-text: #92400e;
-
-  --severity-low: #15803d;
-  --severity-low-bg: #f0fdf4;
-  --severity-low-border: #bbf7d0;
-  --severity-low-text: #166534;
-
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+body {
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
-body {
+::selection {
+  background-color: rgba(0, 113, 227, 0.18);
+  color: #0071e3;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid #0071e3;
+  outline-offset: 2px;
+}
+
+/* Apple Floating Glass Panels */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-toolbar {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Apple Elevation & Cards */
+.apple-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.02);
+  border-radius: 14px;
+}
+
+.apple-card-hover {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Leaflet Apple Style Container & Popups */
+.leaflet-container {
   font-family: var(--font-sans);
-  background-color: var(--bg-page);
-  color: var(--text-primary);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  background: #f5f5f7;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
 }
 
-code, pre {
-  font-family: var(--font-mono);
+.leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.98) !important;
+  color: #1d1d1f !important;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px !important;
+  padding: 0 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
 }
 
-a {
-  color: var(--color-primary);
-  text-decoration: none;
+.leaflet-popup-content {
+  margin: 14px 16px !important;
+  line-height: 1.4 !important;
+  font-family: var(--font-sans) !important;
 }
 
-a:hover {
-  text-decoration: underline;
+.leaflet-popup-tip-container {
+  overflow: visible;
 }
 
-button {
-  font-family: inherit;
+.leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: none !important;
+}
+
+.leaflet-popup-close-button {
+  top: 10px !important;
+  right: 10px !important;
+  color: #86868b !important;
+  padding: 4px !important;
+  font-size: 16px !important;
+  border-radius: 9999px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaflet-popup-close-button:hover {
+  color: #1d1d1f !important;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(8px);
+  color: #86868b !important;
+  font-size: 10px !important;
+  padding: 2px 8px !important;
+  border-top-left-radius: 6px;
+}
+
+/* Custom Leaflet Marker Styling */
+.crisis-marker-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  border: none;
-  outline: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-input, textarea, select {
-  font-family: inherit;
+.crisis-marker-pin:hover {
+  transform: scale(1.15) translateY(-2px);
+  z-index: 1000 !important;
 }
 
-/* Responsive Command Center Behavior: Stacks sequentially on smaller screens */
-@media (max-width: 1100px) {
-  .command-center-layout {
-    grid-template-columns: 1fr !important;
+/* Severity & Priority Pulse */
+.severity-pulse {
+  animation: pulse-ring 2.4s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.5);
   }
-  .command-center-layout > div {
-    position: static !important;
-    max-height: none !important;
-    height: auto !important;
+  70% {
+    box-shadow: 0 0 0 12px rgba(255, 59, 48, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
+  }
+}
+
+.high-pulse {
+  animation: high-pulse-ring 2.4s ease-out infinite;
+}
+
+@keyframes high-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 149, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 149, 0, 0);
+  }
+}
+
+/* macOS-Style Thin Subtle Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .severity-pulse,
+  .high-pulse {
+    animation: none;
   }
 }

@@ -1,110 +1,66 @@
-import React from 'react';
-import type { Incident } from '@/types/domain';
-import { Badge } from '@/components/common/Badge';
-import { formatTime } from '@/lib/formatters';
+import { Link } from 'react-router-dom'
+import { caseId, confidencePercent, formatDisaster, normalizeLabel, scoreValue, timeAgo } from '../../lib/format'
+import type { Incident } from '../../types/incident'
+import { Badge } from '../ui/Badge'
+import { Button } from '../ui/Button'
 
-export interface IncidentCardProps {
-  incident: Incident;
-  isSelected: boolean;
-  onSelect: (incidentId: string) => void;
-}
-
-export const IncidentCard: React.FC<IncidentCardProps> = ({
-  incident,
-  isSelected,
-  onSelect,
-}) => {
-  // Extract a clean short location label
-  const locationLabel = incident.location.address || incident.title.replace(/^Flash Flood & Bridge Inundation — /i, '');
-
-  // Extract a short operational reason from latest snapshot or impact
-  const latestSnapshot = incident.snapshots && incident.snapshots.length > 0
-    ? incident.snapshots[incident.snapshots.length - 1]
-    : null;
-
-  const shortReasons: string[] = [];
-  if (latestSnapshot?.delta_summary && latestSnapshot.delta_summary.length > 0) {
-    shortReasons.push(latestSnapshot.delta_summary[0]);
-  } else if (incident.access_status === 'blocked') {
-    shortReasons.push('Road access blocked');
-  }
-
-  if (incident.current_needs?.some(n => n.type === 'medical')) {
-    shortReasons.unshift('Medical emergency');
-  }
+export function IncidentCard({ incident, compact = false }: { incident: Incident; compact?: boolean }) {
+  const severity = normalizeLabel(incident.severityLabel)
+  const priority = normalizeLabel(incident.priorityLabel)
 
   return (
-    <div
-      onClick={() => onSelect(incident.incident_id)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          onSelect(incident.incident_id);
-        }
-      }}
-      style={{
-        backgroundColor: isSelected ? '#f1f5f9' : '#ffffff',
-        borderLeft: isSelected ? '3px solid #0f172a' : '3px solid transparent',
-        borderBottom: '1px solid #f1f5f9',
-        borderRadius: '3px',
-        padding: '10px 12px',
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        textAlign: 'left',
-        transition: 'background-color 0.15s ease',
-      }}
-    >
-      {/* 1. DISASTER TYPE & LOCATION */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 800,
-              color: isSelected ? '#0f172a' : '#334155',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {incident.disaster_type}
-          </span>
-          <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: '#94a3b8' }}>
-            {incident.incident_id}
-          </span>
+    <article className="group rounded-2xl border border-black/[0.06] bg-white p-4.5 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_4px_12px_rgba(0,0,0,0.02)] transition-all duration-200 hover:-translate-y-0.5 hover:border-black/[0.12] hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge kind="severity">{severity}</Badge>
+          {incident.isDemo ? <Badge>DEMO</Badge> : null}
+          {incident.reviewStatus === 'pending' ? <Badge>PENDING</Badge> : null}
+          {incident.reviewStatus === 'approved' ? <Badge>APPROVED</Badge> : null}
         </div>
-        <div style={{ fontSize: '13px', fontWeight: isSelected ? 700 : 600, color: '#0f172a', marginTop: '1px' }}>
-          {locationLabel}
-        </div>
+        <span className="font-mono text-[11px] font-medium text-[#86868B]">{caseId(incident.id)}</span>
       </div>
 
-      {/* 2. SEVERITY & IMPACT */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
-        <Badge variant={incident.severity} size="sm">
-          {incident.severity}
-        </Badge>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: incident.severity === 'critical' ? '#b91c1c' : '#64748b' }}>
-          {incident.people_affected} affected
-        </span>
+      <p className="mt-2.5 text-[11px] font-semibold tracking-wider text-[#86868B] uppercase">
+        {formatDisaster(incident.disasterType)}
+      </p>
+
+      <h3 className="mt-1 text-sm font-semibold leading-snug text-[#1D1D1F]">
+        {incident.aiAssessment?.summary?.slice(0, 95) || incident.reportText?.slice(0, 95) || 'Incident assessment pending'}
+      </h3>
+
+      <p className="mt-1 text-[12px] text-[#6E6E73]">{incident.locationName ?? 'Location unspecified'}</p>
+
+      {!compact ? (
+        <p className="mt-1 text-[12px] font-medium text-[#1D1D1F]">
+          {incident.affectedPeopleEstimate ?? 0} <span className="text-[#86868B] font-normal">potentially impacted</span>
+        </p>
+      ) : null}
+
+      <div className="mt-3.5 grid grid-cols-3 gap-2 rounded-xl border border-black/[0.04] bg-black/[0.02] p-2 text-[11px]">
+        <Metric label="Priority" value={`${scoreValue(incident.priorityScore)} / 100`} emphasize={priority} />
+        <Metric label="Severity" value={`${scoreValue(incident.severityScore)} / 100`} />
+        <Metric label="Confidence" value={`${confidencePercent(incident.confidenceScore)}%`} />
       </div>
 
-      {/* 3. SHORT REASON (Plain language) */}
-      {shortReasons.length > 0 && (
-        <div style={{ fontSize: '11px', color: '#475569', lineHeight: 1.35, marginTop: '2px' }}>
-          {shortReasons.slice(0, 2).map((r, i) => (
-            <div key={i} style={{ color: r.toLowerCase().includes('medical') ? '#b91c1c' : '#475569' }}>
-              • {r}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 4. LAST UPDATED */}
-      <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '3px' }}>
-        Updated {formatTime(incident.updated_at)}
+      <div className="mt-4 flex items-center justify-between pt-1">
+        <span className="text-[11px] text-[#86868B]">{timeAgo(incident.createdAt)}</span>
+        <Link to={`/incidents/${incident.id}`}>
+          <Button variant="secondary" className="px-3 py-1 text-[11px]">
+            Investigate
+          </Button>
+        </Link>
       </div>
+    </article>
+  )
+}
+
+function Metric({ label, value, emphasize }: { label: string; value: string; emphasize?: string }) {
+  return (
+    <div>
+      <p className="text-[9px] font-semibold tracking-wider text-[#86868B] uppercase">{label}</p>
+      <p className={`font-mono text-[12px] font-semibold ${emphasize === 'CRITICAL' ? 'text-[#D70015]' : 'text-[#1D1D1F]'}`}>
+        {value}
+      </p>
     </div>
-  );
-};
+  )
+}
