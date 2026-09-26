@@ -142,6 +142,27 @@ async def analyze_disaster(
 
     Sends image + text + context and returns a validated AIAnalysisResult.
     """
+    # 1. Prefer OpenRouter Multimodal AI if configured
+    if settings.openrouter_api_key:
+        try:
+            from app.services import openrouter_service
+            logger.info(f"Executing multimodal analysis via OpenRouter ({settings.openrouter_model})")
+            analysis = await openrouter_service.analyze_with_openrouter(
+                image_path_or_bytes=image_path,
+                citizen_report=report_text,
+                location_name=location_name,
+                latitude=latitude,
+                longitude=longitude,
+                weather=weather,
+            )
+            return openrouter_service.convert_openrouter_to_ai_result(
+                analysis, citizen_report=report_text
+            )
+        except Exception as err:
+            logger.warning(f"OpenRouter analysis failed ({err}), checking Gemini fallback...")
+            if not settings.gemini_api_key:
+                raise
+
     client = _get_client()
 
     prompt_text = _build_prompt(report_text, location_name, latitude, longitude, weather, additional_context)

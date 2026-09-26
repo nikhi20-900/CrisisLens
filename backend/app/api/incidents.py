@@ -312,14 +312,29 @@ async def analyze_incident(
 
     if ai_error:
         warnings.append(ai_error)
-        # Create minimal result for engine processing
+        text_lower = (report_text or "").lower()
+
+        # Heuristic inference from citizen report when external AI is rate-limited
+        inferred_type = "general_emergency"
+        for candidate in ["flood", "earthquake", "fire", "landslide", "cyclone", "building_collapse", "storm"]:
+            if candidate in text_lower or (candidate == "flood" and any(k in text_lower for k in ["water", "inundat", "submerg"])):
+                inferred_type = candidate
+                break
+
+        has_stranded = any(w in text_lower for w in ["stranded", "trapped", "marooned", "rooftop", "pillar"])
+        has_blocked = any(w in text_lower for w in ["blocked", "impassable", "collapsed", "cut off"])
+
+        summary = f"Field intake: {inferred_type.replace('_', ' ').title()} reported. AI reasoning queued; human review active."
+
         ai_result = AIAnalysisResult(
-            disaster_type="unknown",
-            summary="AI analysis unavailable. Manual assessment required.",
-            severity=2,
-            severity_label="MEDIUM",
-            confidence=0.1,
-            uncertainty_factors=["AI analysis was unavailable"],
+            disaster_type=inferred_type,
+            summary=summary,
+            severity=4 if has_stranded else 3,
+            severity_label="HIGH" if has_stranded else "MEDIUM",
+            confidence=0.35,
+            evidence=[report_text[:120]] if report_text else [],
+            hazards=["access_disruption"] if has_blocked else [],
+            uncertainty_factors=[ai_error or "AI analysis was unavailable"],
         )
 
     # 5. Deterministic Severity Engine
