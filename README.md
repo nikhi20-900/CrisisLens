@@ -749,10 +749,10 @@ PHASE 7: Deployment & Scaling (PLANNED)
 
 | Team Member | Role | Key Contributions | GitHub |
 |---|---|---|---|
-| **[Member Name]** | Lead Systems Architect | Backend architecture, database models, API design | `@[username]` |
-| **[Member Name]** | Multimodal AI Engineer | OpenRouter pipeline, prompt design, explainability | `@[username]` |
-| **[Member Name]** | Frontend & GIS Developer | React 19 UI, Leaflet map engine, tactical dashboard | `@[username]` |
-| **[Member Name]** | Disaster Operations Specialist | Problem statement alignment, triage scoring logic | `@[username]` |
+| **Nikhil Chhetri** | **Lead Systems Architect** | Overall system architecture, backend architecture, API design, CrisisLens integration, Crisis Zone and Living Crisis Map architecture | [@nikhi20-900](https://github.com/nikhi20-900) |
+| **Ansh Rajput** | **Multimodal AI Engineer** | Gemini multimodal AI integration, disaster image + citizen report analysis, prompt design, evidence extraction, explainability and uncertainty handling | [@Ansh774rajput-wq](https://github.com/Ansh774rajput-wq) |
+| **BagaaBhai28** | **Frontend & GIS Developer** | React frontend, CrisisLens dashboard, Leaflet + OpenStreetMap integration, Living Crisis Map, Crisis Zone visualization | [@BagaaBhai28](https://github.com/BagaaBhai28) |
+| **Prince Kumar Choudhury** | **Disaster Operations & Intelligence Specialist** | Problem statement alignment, disaster scenarios, crisis prioritisation, triage and response workflow, human-in-the-loop decision support | [@princekumarchoudhury02-dotcom](https://github.com/princekumarchoudhury02-dotcom) |
 
 ---
 
