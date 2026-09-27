@@ -99,8 +99,6 @@ async def health_check():
     services = {
         "gemini_configured": bool(settings.gemini_api_key),
         "gemini_model": settings.gemini_model,
-        "openrouter_configured": bool(settings.openrouter_api_key),
-        "openrouter_model": settings.openrouter_model,
         "openstreetmap_tiles": "active (no key required)",
         "nasa_firms_configured": bool(settings.nasa_firms_map_key),
         "open_meteo": "active (no key required)",

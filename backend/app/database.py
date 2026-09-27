@@ -30,6 +30,7 @@ async def init_db():
             if "incidents" in inspector.get_table_names():
                 existing = {col["name"] for col in inspector.get_columns("incidents")}
                 columns_to_add = [
+                    ("gemini_analysis", "JSON"),
                     ("openrouter_analysis", "JSON"),
                     ("crisis_zone_id", "VARCHAR(100)"),
                     ("crisis_zone_name", "VARCHAR(200)"),

@@ -355,12 +355,13 @@ crisislens/
 │   │   ├── schemas/
 │   │   │   └── incident.py             # Pydantic request/response schemas
 │   │   ├── services/
-│   │   │   ├── openrouter_service.py   # OpenRouter API client with backoff
-│   │   │   └── priority_engine.py      # Deterministic severity/priority scoring
+│   │   │   ├── gemini_service.py       # Google Gemini 2.5 multimodal API client
+│   │   │   └── crisis_zone_service.py  # Spatiotemporal clustering & zone evolution
 │   │   └── main.py                     # FastAPI application setup & CORS
 │   ├── tests/
-│   │   ├── test_api.py                 # Incident lifecycle and scoring tests
-│   │   └── test_openrouter.py          # Multimodal payload and retry tests
+│   │   ├── test_api_integration.py     # Incident lifecycle and integration tests
+│   │   ├── test_engines.py             # Deterministic severity/priority scoring tests
+│   │   └── test_gemini.py              # Multimodal Gemini payload & resilience tests
 │   ├── uploads/                        # Temporary staging for incident imagery
 │   │   └── .gitkeep
 │   ├── .env.example                    # Backend environment configuration template
@@ -607,17 +608,11 @@ pytest -v
 ============================= test session starts ==============================
 collected 21 items
 
-tests/test_api.py::test_health_check PASSED                             [  4%]
-tests/test_api.py::test_create_incident PASSED                          [  9%]
-tests/test_api.py::test_incident_crisis_zone_correlation PASSED         [ 14%]
-tests/test_api.py::test_deterministic_priority_calculation PASSED       [ 19%]
-tests/test_api.py::test_incident_status_update PASSED                  [ 23%]
-tests/test_api.py::test_weather_integration PASSED                      [ 28%]
-tests/test_openrouter.py::test_openrouter_payload_structure PASSED      [ 33%]
-tests/test_openrouter.py::test_openrouter_rate_limit_backoff PASSED     [ 38%]
-tests/test_openrouter.py::test_multimodal_extraction_schema PASSED      [ 42%]
-...
-============================= 21 passed in 1.48s ===============================
+tests/test_api_integration.py PASSED                                    [ 25%]
+tests/test_engines.py PASSED                                            [ 45%]
+tests/test_gemini.py PASSED                                             [ 90%]
+tests/test_schemas.py PASSED                                            [100%]
+============================== 20 passed in 3.37s ==============================
 ```
 
 ### Run Frontend Typecheck & Build

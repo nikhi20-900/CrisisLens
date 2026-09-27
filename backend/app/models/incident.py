@@ -61,6 +61,7 @@ class Incident(Base):
 
     # AI assessment (raw structured output from multimodal AI)
     ai_assessment = Column(JSON)
+    gemini_analysis = Column(JSON)
     openrouter_analysis = Column(JSON)
 
     # Crisis Zone & Evolution Tracking

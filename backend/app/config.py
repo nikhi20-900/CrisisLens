@@ -9,13 +9,9 @@ import os
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # AI - OpenRouter (Primary Multimodal)
-    openrouter_api_key: str = ""
-    openrouter_model: str = "openrouter/free"
-
-    # AI - Google Gemini (Alternative)
+    # AI - Google Gemini (Primary Multimodal API)
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.6-flash"
 
     # Maps - OpenStreetMap + Leaflet (No API key required)
 

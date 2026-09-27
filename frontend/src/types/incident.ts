@@ -116,7 +116,8 @@ export interface Incident {
   crisisZoneName?: string | null
   evolutionHistory?: CrisisZoneEvolutionEvent[] | null
   priorityChangeReason?: string | null
-  openrouterAnalysis?: OpenRouterDisasterAnalysis | null
+  geminiAnalysis?: GeminiDisasterAnalysis | null
+  openrouterAnalysis?: GeminiDisasterAnalysis | null
 }
 
 export interface IncidentListResponse {
@@ -130,7 +131,7 @@ export interface AnalysisResponse {
   warnings: string[]
 }
 
-export interface OpenRouterDisasterAnalysis {
+export interface GeminiDisasterAnalysis {
   disaster_type: string
   observed_conditions: string[]
   visible_damage: string[]
@@ -143,6 +144,9 @@ export interface OpenRouterDisasterAnalysis {
   confidence: number
   recommended_attention_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 }
+
+// Backwards compatibility alias
+export type OpenRouterDisasterAnalysis = GeminiDisasterAnalysis
 
 export interface CrisisZoneEvolutionEvent {
   timestamp: string
@@ -168,7 +172,7 @@ export interface CrisisZoneInfo {
 }
 
 export interface AnalyzeDisasterResponse {
-  analysis: OpenRouterDisasterAnalysis
+  analysis: GeminiDisasterAnalysis
   crisis_zone: CrisisZoneInfo
   incident: Incident
   analysisTimeMs: number

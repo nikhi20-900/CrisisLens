@@ -123,11 +123,11 @@ export function IncidentDetail() {
         </div>
       ) : null}
 
-      {/* OpenRouter Multimodal AI Assessment */}
-      {incident.openrouterAnalysis ? (
+      {/* Google Gemini Multimodal AI Assessment */}
+      {incident.geminiAnalysis || incident.openrouterAnalysis ? (
         <div className="mb-6">
           <MultimodalIntelligencePanel
-            analysis={incident.openrouterAnalysis}
+            analysis={(incident.geminiAnalysis ?? incident.openrouterAnalysis)!}
             summaryText={incident.aiAssessment?.summary}
           />
         </div>

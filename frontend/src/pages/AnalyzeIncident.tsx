@@ -36,8 +36,8 @@ export function AnalyzeIncident() {
   const [warnings, setWarnings] = useState<string[]>([])
 
   async function handleAnalyze() {
-    if (!imageFile && !reportText.trim()) {
-      setError('Missing Input: Please upload a disaster photograph or enter a citizen/field report.')
+    if (!imageFile || !reportText.trim()) {
+      setError('Missing Input: Both a disaster photograph and a citizen report are required for multimodal analysis.')
       return
     }
 
@@ -61,7 +61,7 @@ export function AnalyzeIncident() {
 
     try {
       const timer1 = setTimeout(() => {
-        setLoadingStep('OpenRouter multimodal vision AI reasoning across evidence...')
+        setLoadingStep('Google Gemini multimodal vision AI reasoning across evidence...')
       }, 1000)
 
       const timer2 = setTimeout(() => {
@@ -84,16 +84,10 @@ export function AnalyzeIncident() {
       void refreshIncidents()
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
-      if (message.includes('OPENROUTER_API_KEY') || message.includes('OpenRouter AI service is not configured')) {
-        setError('OpenRouter Unavailable: OPENROUTER_API_KEY is not configured in backend/.env. Please configure your API key.')
-      } else if (message.includes('HTTP 502') || message.includes('Bad Gateway') || message.includes('Failed to connect')) {
-        setError('OpenRouter API Failure: Unable to reach OpenRouter multimodal endpoint. Please check network connectivity.')
-      } else if (message.includes('unparseable') || message.includes('JSON')) {
-        setError('Malformed AI Response: AI response could not be parsed as valid JSON. Manual assessment required.')
-      } else if (message.includes('400') || message.includes('At least a disaster photograph')) {
-        setError('Missing Input: At least a disaster photograph or a citizen report is required.')
+      if (message.includes('Both a disaster photograph') || message.includes('Missing Input')) {
+        setError('Missing Input: Both a disaster photograph and a citizen report are required.')
       } else {
-        setError(`Analysis Failed: ${message}`)
+        setError('AI analysis unavailable. Manual assessment required.')
       }
     } finally {
       setAnalyzing(false)
@@ -111,13 +105,13 @@ export function AnalyzeIncident() {
   }
 
   const result: Incident | null = disasterResponse?.incident ?? null
-  const analysis = disasterResponse?.analysis ?? result?.openrouterAnalysis ?? null
+  const analysis = disasterResponse?.analysis ?? result?.geminiAnalysis ?? result?.openrouterAnalysis ?? null
   const crisisZone = disasterResponse?.crisis_zone ?? null
 
   return (
     <PageContainer
       title="Multimodal Disaster Intelligence"
-      kicker="OpenRouter Vision AI · Living Crisis Map Ingestion"
+      kicker="Google Gemini Vision AI · Living Crisis Map Ingestion"
       actions={
         result ? (
           <div className="flex items-center gap-2.5">
@@ -190,10 +184,10 @@ export function AnalyzeIncident() {
             <div className="space-y-4 rounded-2xl border border-black/[0.06] bg-white p-5 shadow-xs">
               <div className="rounded-xl border border-black/[0.05] bg-black/[0.02] p-3.5 text-[12px] text-[#6E6E73]">
                 <p className="flex items-center gap-1.5 font-semibold text-[#1D1D1F]">
-                  <Sparkles size={14} className="text-[#0071E3]" /> OpenRouter Multimodal AI Synthesis
+                  <Sparkles size={14} className="text-[#0071E3]" /> Google Gemini Multimodal AI Synthesis
                 </p>
                 <p className="mt-1 leading-relaxed">
-                  Fuses imagery, citizen narrative, Open-Meteo telemetry, and Crisis Zone history via OpenRouter vision models. Feeds deterministic severity and Living Crisis Map scoring.
+                  Fuses imagery, citizen narrative, Open-Meteo telemetry, and Crisis Zone history via Google Gemini multimodal models. Feeds deterministic severity and Living Crisis Map scoring.
                 </p>
               </div>
 
@@ -225,7 +219,7 @@ export function AnalyzeIncident() {
                 className="w-full py-2.5 text-sm font-semibold tracking-wide"
               >
                 <Sparkles size={16} />
-                {analyzing ? 'Reasoning Across Multimodal Feeds...' : 'Analyze with OpenRouter AI'}
+                {analyzing ? 'Reasoning Across Multimodal Feeds...' : 'Analyze with Gemini AI'}
               </Button>
             </div>
           </div>

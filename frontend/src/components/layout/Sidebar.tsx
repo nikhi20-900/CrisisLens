@@ -33,7 +33,7 @@ const secondary = [
 export function AppShell() {
   const [open, setOpen] = useState(false)
   const { health, healthError, liveConnected } = useApp()
-  const aiOnline = Boolean(health?.services.openrouter_configured || health?.services.gemini_configured)
+  const aiOnline = Boolean(health?.services.gemini_configured)
   const mapOnline = true // OpenStreetMap active without API key
   const weatherOnline = Boolean(health) && !healthError
 

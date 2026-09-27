@@ -38,7 +38,7 @@ export function DataSources() {
   const sources: DataSourceItem[] = [
     {
       name: 'Multimodal Vision & Reasoning AI',
-      provider: 'Google Gemini (gemini-2.5-flash)',
+      provider: `Google Gemini (${health?.services.gemini_model || 'gemini-3.6-flash'})`,
       purpose: 'Fuses photographic imagery, citizen reports, weather context, and infrastructure damage indicators.',
       status: health?.services.gemini_configured ? 'connected' : 'unavailable',
       details: health?.services.gemini_configured ? 'Configured via GEMINI_API_KEY with strict JSON schema validation.' : 'Missing GEMINI_API_KEY environment variable.',

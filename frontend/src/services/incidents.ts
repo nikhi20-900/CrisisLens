@@ -51,6 +51,7 @@ interface RawIncident {
   crisis_zone_name?: string | null
   evolution_history?: any[] | null
   priority_change_reason?: string | null
+  gemini_analysis?: any | null
   openrouter_analysis?: any | null
 }
 
@@ -119,7 +120,8 @@ export function mapIncident(raw: RawIncident): Incident {
     crisisZoneName: raw.crisis_zone_name ?? null,
     evolutionHistory: raw.evolution_history ?? null,
     priorityChangeReason: raw.priority_change_reason ?? null,
-    openrouterAnalysis: raw.openrouter_analysis ?? null,
+    geminiAnalysis: raw.gemini_analysis ?? raw.openrouter_analysis ?? null,
+    openrouterAnalysis: raw.gemini_analysis ?? raw.openrouter_analysis ?? null,
   }
 }
 

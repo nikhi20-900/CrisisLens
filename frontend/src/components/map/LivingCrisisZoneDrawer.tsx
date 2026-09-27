@@ -30,7 +30,7 @@ export function LivingCrisisZoneDrawer({ incident, onClose, onFocus }: LivingCri
   const [activeTab, setActiveTab] = useState<TabType>('overview')
 
   const normPriority = normalizeLabel(incident.priorityLabel)
-  const openAnalysis = incident.openrouterAnalysis
+  const openAnalysis = incident.geminiAnalysis ?? incident.openrouterAnalysis
   const evolution = incident.evolutionHistory ?? []
   const hasEvolution = evolution.length > 1
 

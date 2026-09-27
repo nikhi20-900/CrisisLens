@@ -33,20 +33,20 @@ tests/test_engines.py::test_severity_calculation_critical_flood PASSED   [ 28%]
 tests/test_engines.py::test_severity_calculation_minimal PASSED          [ 33%]
 tests/test_engines.py::test_priority_engine_calculation PASSED           [ 38%]
 tests/test_engines.py::test_recommendation_engine_explainable_rules PASSED [ 42%]
-tests/test_openrouter.py::test_openrouter_schema_validation_success PASSED [ 47%]
-tests/test_openrouter.py::test_openrouter_schema_with_markdown_fences PASSED [ 52%]
-tests/test_openrouter.py::test_openrouter_malformed_ai_response PASSED   [ 57%]
-tests/test_openrouter.py::test_missing_openrouter_api_key PASSED         [ 61%]
-tests/test_openrouter.py::test_openrouter_api_failure_handling PASSED    [ 66%]
-tests/test_openrouter.py::test_convert_openrouter_to_ai_result PASSED    [ 71%]
-tests/test_openrouter.py::test_haversine_distance PASSED                 [ 76%]
-tests/test_openrouter.py::test_endpoint_missing_input PASSED             [ 80%]
-tests/test_openrouter.py::test_endpoint_invalid_image PASSED             [ 85%]
-tests/test_openrouter.py::test_endpoint_successful_analysis_and_crisis_zone_evolution PASSED [ 90%]
-tests/test_schemas.py::test_ai_analysis_result_validation PASSED         [ 95%]
-tests/test_schemas.py::test_human_review_schema_validation PASSED        [100%]
+tests/test_gemini.py::test_gemini_schema_validation_success PASSED   [ 47%]
+tests/test_gemini.py::test_gemini_schema_with_markdown_fences PASSED   [ 52%]
+tests/test_gemini.py::test_gemini_malformed_ai_response PASSED         [ 57%]
+tests/test_gemini.py::test_missing_gemini_api_key PASSED               [ 61%]
+tests/test_gemini.py::test_gemini_api_failure_handling PASSED          [ 66%]
+tests/test_gemini.py::test_convert_gemini_to_ai_result PASSED          [ 71%]
+tests/test_gemini.py::test_haversine_distance PASSED                   [ 76%]
+tests/test_gemini.py::test_endpoint_missing_input PASSED               [ 80%]
+tests/test_gemini.py::test_endpoint_invalid_image PASSED               [ 85%]
+tests/test_gemini.py::test_endpoint_successful_analysis_and_crisis_zone_evolution PASSED [ 90%]
+tests/test_schemas.py::test_ai_analysis_result_validation PASSED       [ 95%]
+tests/test_schemas.py::test_human_review_schema_validation PASSED      [100%]
 
-============================= 21 passed in 14.29s ==============================
+============================== 20 passed in 3.37s ==============================
 ```
 
 ---

@@ -16,6 +16,7 @@ from sqlalchemy import select, desc
 
 from app.models.incident import Incident
 from app.schemas import (
+    GeminiDisasterAnalysis,
     OpenRouterDisasterAnalysis,
     SeverityBreakdown,
     PriorityBreakdown,
@@ -124,7 +125,7 @@ async def find_matching_crisis_zone(
 
 def record_crisis_zone_evolution(
     incident: Incident,
-    analysis: OpenRouterDisasterAnalysis,
+    analysis: GeminiDisasterAnalysis,
     severity: SeverityBreakdown,
     priority: PriorityBreakdown,
     new_image_url: Optional[str] = None,
@@ -211,6 +212,8 @@ def record_crisis_zone_evolution(
     incident.confidence_score = analysis.confidence
     incident.severity_breakdown = severity.model_dump()
     incident.priority_breakdown = priority.model_dump()
+    incident.gemini_analysis = analysis.model_dump()
+    incident.ai_assessment = analysis.model_dump()
     incident.openrouter_analysis = analysis.model_dump()
 
     # Update disaster type if previously unknown
@@ -243,7 +246,7 @@ def record_crisis_zone_evolution(
 
 def initialize_new_crisis_zone(
     incident: Incident,
-    analysis: OpenRouterDisasterAnalysis,
+    analysis: GeminiDisasterAnalysis,
     severity: SeverityBreakdown,
     priority: PriorityBreakdown,
     report_text: Optional[str] = None,
@@ -285,4 +288,7 @@ def initialize_new_crisis_zone(
     incident.crisis_zone_name = zone_name
     incident.evolution_history = [initial_step]
     incident.priority_change_reason = initial_step["change_reason"]
+    incident.gemini_analysis = analysis.model_dump()
+    incident.ai_assessment = analysis.model_dump()
+    incident.openrouter_analysis = analysis.model_dump()
     return incident

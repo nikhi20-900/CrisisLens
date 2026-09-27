@@ -206,7 +206,7 @@ export function IncidentMap({
               isSelected,
             })
 
-            const openAnalysis = incident.openrouterAnalysis
+            const openAnalysis = incident.geminiAnalysis ?? incident.openrouterAnalysis
             const unknowns = openAnalysis?.unknown_information ?? []
 
             return (

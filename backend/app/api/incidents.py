@@ -19,13 +19,13 @@ from app.models.incident import Incident
 from app.schemas import (
     IncidentResponse, IncidentListResponse, AnalysisResponse,
     HumanReview, AIAnalysisResult, WeatherContext,
-    OpenRouterDisasterAnalysis, CrisisZoneInfo, AnalyzeDisasterResponse,
+    GeminiDisasterAnalysis, OpenRouterDisasterAnalysis, CrisisZoneInfo, AnalyzeDisasterResponse,
 )
 from app.services import (
     ai_service,
     weather_service,
     geospatial_service,
-    openrouter_service,
+    gemini_service,
     crisis_zone_service,
 )
 from app.engines.severity_engine import calculate_severity
@@ -74,24 +74,21 @@ async def execute_disaster_analysis(
     crisis_zone_id: Optional[str] = None,
     db: AsyncSession = None,
 ) -> AnalyzeDisasterResponse:
-    """Core disaster analysis logic combining OpenRouter AI and Crisis Zone evolution."""
+    """Core disaster analysis logic combining Google Gemini Multimodal AI and Crisis Zone evolution."""
     start_time = time.time()
     warnings: list[str] = []
 
     text_content = citizen_report or report_text
-    if not image and not text_content:
+    if not image or not text_content or not text_content.strip():
         raise HTTPException(
             status_code=400,
-            detail="At least a disaster photograph or a citizen report is required for analysis.",
+            detail="Both a disaster photograph and a citizen report are required for multimodal analysis.",
         )
 
-    # 1. Process and save uploaded image if present
-    image_url = None
-    image_path = None
-    if image:
-        _validate_file(image)
-        image_url = await _save_upload(image)
-        image_path = str(UPLOAD_DIR / image_url.split("/")[-1])
+    # 1. Process and save uploaded image
+    _validate_file(image)
+    image_url = await _save_upload(image)
+    image_path = str(UPLOAD_DIR / image_url.split("/")[-1])
 
     # 2. Reverse geocode if coordinates provided without location name
     if latitude is not None and longitude is not None and not location_name:
@@ -107,9 +104,9 @@ async def execute_disaster_analysis(
         weather = WeatherContext(available=False, weather_description="No coordinates provided")
         warnings.append("Weather context unavailable — no coordinates provided.")
 
-    # 4. OpenRouter Multimodal AI Analysis
+    # 4. Google Gemini Multimodal AI Analysis
     try:
-        analysis = await openrouter_service.analyze_with_openrouter(
+        analysis = await gemini_service.analyze_with_gemini(
             image_path_or_bytes=image_path,
             citizen_report=text_content,
             location_name=location_name,
@@ -117,27 +114,45 @@ async def execute_disaster_analysis(
             longitude=longitude,
             weather=weather,
         )
-    except openrouter_service.OpenRouterConfigError as e:
-        logger.error(f"OpenRouter configuration error: {e}")
+    except gemini_service.GeminiConfigError as e:
+        logger.error(f"Gemini configuration error: {e}")
         raise HTTPException(
             status_code=503,
-            detail="OpenRouter AI service is not configured. Please set OPENROUTER_API_KEY in backend/.env.",
+            detail="AI analysis unavailable. Manual assessment required. (GEMINI_API_KEY is not configured)",
         )
-    except openrouter_service.OpenRouterAPIError as e:
-        logger.error(f"OpenRouter API error: {e}")
+    except gemini_service.GeminiRateLimitError as e:
+        logger.error(f"Gemini rate limit error: {e}")
+        raise HTTPException(
+            status_code=429,
+            detail="AI analysis unavailable. Manual assessment required. (Gemini API rate limit exceeded)",
+        )
+    except gemini_service.GeminiAuthError as e:
+        logger.error(f"Gemini authentication error: {e}")
+        raise HTTPException(
+            status_code=401,
+            detail="AI analysis unavailable. Manual assessment required. (Invalid Gemini API credentials)",
+        )
+    except gemini_service.GeminiModelNotFoundError as e:
+        logger.error(f"Gemini model error: {e}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"AI analysis unavailable. Manual assessment required. ({str(e)})",
+        )
+    except gemini_service.GeminiAPIError as e:
+        logger.error(f"Gemini API error: {e}")
         raise HTTPException(
             status_code=502,
-            detail=f"OpenRouter multimodal analysis failed: {str(e)}",
+            detail=f"AI analysis unavailable. Manual assessment required. ({str(e)})",
         )
     except Exception as e:
-        logger.error(f"Unexpected error during OpenRouter analysis: {e}")
+        logger.error(f"Unexpected error during Gemini analysis: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to complete multimodal analysis: {str(e)}",
+            detail=f"AI analysis unavailable. Manual assessment required. ({str(e)})",
         )
 
     # 5. Deterministic Severity & Priority Engines (Human decision-support)
-    ai_result = openrouter_service.convert_openrouter_to_ai_result(analysis, citizen_report=text_content)
+    ai_result = gemini_service.convert_gemini_to_ai_result(analysis, citizen_report=text_content)
     severity = calculate_severity(ai_result)
     priority = calculate_priority(ai_result, severity, weather)
     recommendations = generate_recommendations(ai_result, severity, priority)
@@ -197,6 +212,7 @@ async def execute_disaster_analysis(
             recommendations=[r for r in recommendations],
             weather_context=weather.model_dump() if weather else None,
             ai_assessment=analysis.model_dump(),
+            gemini_analysis=analysis.model_dump(),
             openrouter_analysis=analysis.model_dump(),
             severity_breakdown=severity.model_dump(),
             priority_breakdown=priority.model_dump(),
@@ -245,7 +261,7 @@ async def analyze_disaster(
     crisis_zone_id: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
 ):
-    """Analyze a disaster report with OpenRouter Multimodal AI and update/create a Crisis Zone."""
+    """Analyze a disaster report with Google Gemini Multimodal AI and update/create a Crisis Zone."""
     return await execute_disaster_analysis(
         image=image,
         citizen_report=citizen_report,

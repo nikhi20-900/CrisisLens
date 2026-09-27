@@ -56,10 +56,10 @@ class AIAnalysisResult(BaseModel):
         return str(v).lower().strip() if v else "unknown"
 
 
-# ─── OpenRouter Multimodal AI Schemas ────────────────────────────────
+# ─── Google Gemini Multimodal AI Schemas ────────────────────────────
 
-class OpenRouterDisasterAnalysis(BaseModel):
-    """Validated structured intelligence from OpenRouter Multimodal AI.
+class GeminiDisasterAnalysis(BaseModel):
+    """Validated structured intelligence from Google Gemini Multimodal AI.
 
     Adheres to strict non-hallucination rules: facts must be supported by
     evidence, and unconfirmed details are classified in unknown_information.
@@ -86,7 +86,7 @@ class OpenRouterDisasterAnalysis(BaseModel):
 
     @field_validator("disaster_type", mode="before")
     @classmethod
-    def normalize_openrouter_disaster_type(cls, v):
+    def normalize_gemini_disaster_type(cls, v):
         return str(v).lower().strip() if v else "unknown"
 
     @field_validator("confidence", mode="before")
@@ -97,6 +97,10 @@ class OpenRouterDisasterAnalysis(BaseModel):
             return max(0.0, min(1.0, val))
         except (ValueError, TypeError):
             return 0.5
+
+
+# Backwards compatibility alias
+OpenRouterDisasterAnalysis = GeminiDisasterAnalysis
 
 
 # ─── Severity / Priority Breakdown ──────────────────────────────────
@@ -218,8 +222,9 @@ class IncidentResponse(BaseModel):
 
     is_demo: Optional[bool] = None
 
-    # OpenRouter & Crisis Zone
-    openrouter_analysis: Optional[dict] = None
+    # Gemini Multimodal AI & Crisis Zone
+    gemini_analysis: Optional[dict] = None
+    openrouter_analysis: Optional[dict] = None  # Legacy compatibility
     crisis_zone_id: Optional[str] = None
     crisis_zone_name: Optional[str] = None
     evolution_history: Optional[list[dict]] = None
@@ -252,7 +257,7 @@ class CrisisZoneInfo(BaseModel):
 
 class AnalyzeDisasterResponse(BaseModel):
     """Structured response from POST /api/analyze-disaster."""
-    analysis: OpenRouterDisasterAnalysis
+    analysis: GeminiDisasterAnalysis
     crisis_zone: CrisisZoneInfo
     incident: IncidentResponse
     analysis_time_ms: float
